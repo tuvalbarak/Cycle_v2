@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/mainActivityNavigation"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        app:defaultNavHost="true"
+        app:navGraph="@navigation/nav_main"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/mainActivityBottomNavigationView"
+        app:layout_constraintVertical_bias="0"/>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/mainActivityBottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_gravity="bottom"
+        android:background="@color/white"
+        app:menu="@menu/main_bottom_navigation"
+        app:labelVisibilityMode="labeled"
+        android:layout_alignParentBottom="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <com.tdp.cycle.common.CycleProgressBar
+        android:id="@+id/mainActivityPB"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+<!--<?xml version="1.0" encoding="utf-8"?>-->
+<!--<androidx.constraintlayout.widget.ConstraintLayout-->
+<!--    xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--    xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--    xmlns:tools="http://schemas.android.com/tools"-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="match_parent">-->
+
+<!--    <androidx.cardview.widget.CardView-->
+<!--        android:id="@+id/activityMainHeader"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        android:elevation="8dp"-->
+<!--        android:background="@drawable/rect_white_blue_stroke">-->
+
+<!--        <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:padding="12dp"-->
+<!--            android:background="@color/primary_blue">-->
+
+<!--            <ImageView-->
+<!--                android:id="@+id/mainActivityModelImage"-->
+<!--                android:layout_width="70dp"-->
+<!--                android:layout_height="70dp"-->
+<!--                android:src="@drawable/ic_tesla_y"-->
+<!--                app:layout_constraintTop_toTopOf="parent"-->
+<!--                app:layout_constraintStart_toStartOf="parent" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/mainActivityVehicleBrand"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Brand: Tesla"-->
+<!--                app:layout_constraintStart_toEndOf="@id/mainActivityModelImage"-->
+<!--                app:layout_constraintEnd_toStartOf="@id/mainActivityUserName"-->
+<!--                app:layout_constraintTop_toTopOf="@id/mainActivityModelImage"-->
+<!--                android:layout_marginTop="16dp"-->
+<!--                android:layout_marginStart="6dp"-->
+<!--                android:gravity="center"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textStyle="bold"/>-->
+<!--            <TextView-->
+<!--                android:id="@+id/mainActivityVehicleModel"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Model: Y"-->
+<!--                app:layout_constraintStart_toEndOf="@id/mainActivityModelImage"-->
+<!--                app:layout_constraintEnd_toStartOf="@id/mainActivityUserName"-->
+<!--                app:layout_constraintTop_toBottomOf="@id/mainActivityVehicleBrand"-->
+<!--                android:layout_marginStart="6dp"-->
+<!--                android:layout_marginTop="2dp"-->
+<!--                android:gravity="center"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textStyle="bold"/>-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/mainActivityUserName"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Johnny"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintTop_toTopOf="@id/mainActivityVehicleBrand"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textStyle="bold"/>-->
+
+<!--        </androidx.constraintlayout.widget.ConstraintLayout>-->
+
+<!--    </androidx.cardview.widget.CardView>-->
+
+<!--    <androidx.fragment.app.FragmentContainerView-->
+<!--        android:id="@+id/map"-->
+<!--        android:name="com.google.android.gms.maps.SupportMapFragment"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="0dp"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/activityMainHeader"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintBottom_toTopOf="@id/mainActivityFooter"-->
+<!--        tools:context=".MainActivity" />-->
+
+<!--    <androidx.cardview.widget.CardView-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:layout_constraintBottom_toTopOf="@id/mainActivityFooter"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        android:layout_marginBottom="16dp"-->
+<!--        android:layout_marginStart="16dp"-->
+<!--        android:elevation="8dp"-->
+<!--        app:cardElevation="8dp"-->
+<!--        app:cardCornerRadius="8dp"-->
+<!--        android:alpha="0.95">-->
+
+<!--        <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:padding="16dp"-->
+<!--            android:background="@drawable/rect_white_blue_stroke">-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/activityMainTemperature"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Temperature: 28C"-->
+<!--                android:textColor="@color/primary_blue"-->
+<!--                app:layout_constraintTop_toTopOf="parent"-->
+<!--                app:layout_constraintStart_toStartOf="parent" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/activityMainBatteryLevel"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Battery: 80%"-->
+<!--                android:textColor="@color/primary_blue"-->
+<!--                app:layout_constraintTop_toBottomOf="@id/activityMainTemperature"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                android:layout_marginTop="4dp"/>-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/activityMainElevation"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Elevation: N/A"-->
+<!--                android:textColor="@color/primary_blue"-->
+<!--                app:layout_constraintTop_toBottomOf="@id/activityMainBatteryLevel"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                android:layout_marginTop="4dp" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/activityMainETA"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="ETA: N/A"-->
+<!--                android:textColor="@color/primary_blue"-->
+<!--                app:layout_constraintTop_toBottomOf="@id/activityMainElevation"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                android:layout_marginTop="4dp" />-->
+
+<!--        </androidx.constraintlayout.widget.ConstraintLayout>-->
+
+<!--    </androidx.cardview.widget.CardView>-->
+
+<!--    <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--        android:id="@+id/mainActivityFooter"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        android:background="@drawable/rect_white"-->
+<!--        android:padding="16dp"-->
+<!--        android:layout_marginTop="8dp">-->
+
+<!--        <EditText-->
+<!--            android:id="@+id/mainActivitySearchEditText"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:hint="Search an address..."-->
+<!--            android:background="@null"-->
+<!--            android:layout_marginBottom="8dp"-->
+<!--            android:gravity="center"-->
+<!--            android:textColor="@color/primary_blue"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintBottom_toTopOf="@+id/mainActivitySearchButton" />-->
+
+<!--        <Button-->
+<!--            android:id="@+id/mainActivitySearchButton"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="60dp"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            android:layout_marginTop="4dp"-->
+<!--            android:text="Search"/>-->
+
+<!--    </androidx.constraintlayout.widget.ConstraintLayout>-->
+
+
+
+<!--</androidx.constraintlayout.widget.ConstraintLayout>-->

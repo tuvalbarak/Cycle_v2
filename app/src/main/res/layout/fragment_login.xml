@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/common_screen_padding">
+
+    <TextView
+        android:id="@+id/loginFragmentTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign In"
+        style="@style/CycleTitleStyle"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/loginFragmentSignInGoogle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/common_extra_large_margin"
+        android:layout_marginHorizontal="@dimen/common_medium_margin"
+        android:paddingVertical="@dimen/common_small_padding"
+        android:background="@drawable/rect_white_gray_stroke"
+        android:gravity="center"
+        android:textSize="@dimen/common_medium_text_size"
+        android:paddingHorizontal="60dp"
+        android:text="Sign in with Google"
+        app:layout_constraintTop_toBottomOf="@id/loginFragmentTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:drawableStartCompat="@drawable/ic_google_logo" />
+    
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/loginFragmentOrText"
+        app:layout_constraintTop_toTopOf="@id/loginFragmentOrText"
+        app:layout_constraintBottom_toBottomOf="@id/loginFragmentOrText"
+        android:background="@color/light_grey"
+        android:layout_marginEnd="@dimen/common_small_margin" />
+    
+    <TextView
+        android:id="@+id/loginFragmentOrText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OR"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="@dimen/common_medium_text_size"
+        android:textColor="@color/light_grey"
+        app:layout_constraintTop_toBottomOf="@id/loginFragmentSignInGoogle"
+        android:layout_marginTop="@dimen/common_extra_large_margin" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/loginFragmentOrText"
+        app:layout_constraintTop_toTopOf="@id/loginFragmentOrText"
+        app:layout_constraintBottom_toBottomOf="@id/loginFragmentOrText"
+        android:background="@color/light_grey"
+        android:layout_marginStart="@dimen/common_small_margin" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/filledTextField"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/loginFragmentOrText"
+        android:hint="test@example.com"
+        android:layout_marginTop="@dimen/common_extra_extra_large_margin">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/loginFragmentCTA"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="Sign in" />
+    
+
+</androidx.constraintlayout.widget.ConstraintLayout>

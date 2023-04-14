@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_marginTop="@dimen/common_large_margin"
+    android:layout_marginHorizontal="@dimen/common_small_margin"
+    app:cardElevation="@dimen/common_card_elevation">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/itemMyVehiclesContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="@dimen/common_small_padding"
+        android:background="@drawable/selector_item_selected">
+
+        <ImageView
+            android:id="@+id/itemMyVehiclesImage"
+            android:layout_width="@dimen/common_image_size"
+            android:layout_height="@dimen/common_image_size"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:src="@drawable/ic_car" />
+
+        <TextView
+            android:id="@+id/itemMyVehiclesName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="@id/itemMyVehiclesImage"
+            app:layout_constraintBottom_toBottomOf="@id/itemMyVehiclesImage"
+            app:layout_constraintStart_toEndOf="@id/itemMyVehiclesImage"
+            tools:text="Tesla"
+            android:layout_marginStart="@dimen/common_small_margin"
+            style="@style/CycleRegularTextStyle"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/itemMyVehiclesModel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="@id/itemMyVehiclesImage"
+            app:layout_constraintBottom_toBottomOf="@id/itemMyVehiclesImage"
+            app:layout_constraintStart_toEndOf="@id/itemMyVehiclesName"
+            tools:text="Y"
+            android:layout_marginHorizontal="4dp"
+            style="@style/CycleRegularTextStyle"
+            />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

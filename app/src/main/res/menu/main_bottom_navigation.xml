@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/selector_tab_profile"
+        android:title="Profile" />
+
+    <item
+        android:id="@+id/messagingFragment"
+        android:icon="@drawable/selector_tab_messaging"
+        android:title="Messaging" />
+
+    <item
+        android:id="@+id/routesFragment"
+        android:icon="@drawable/selector_tab_routes"
+        android:title="Routes" />
+
+</menu>

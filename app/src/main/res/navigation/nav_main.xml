@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_main"
+    app:startDestination="@id/splashFragment">
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.tdp.cycle.features.splash.SplashFragment"
+        android:label="splashFragment"
+        tools:layout="@layout/fragment_splash">
+
+        <action
+            android:id="@+id/action_splashFragment_to_routesFragment"
+            app:destination="@+id/routesFragment" />
+
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@+id/loginFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/routesFragment"
+        android:name="com.tdp.cycle.features.routes.RoutesFragment"
+        android:label="routesFragment"
+        tools:layout="@layout/fragment_routes">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.tdp.cycle.features.profile.ProfileFragment"
+        android:label="profileFragment"
+        tools:layout="@layout/fragment_profile">
+
+        <action
+            android:id="@+id/action_profileFragment_to_LoginFragment"
+            app:destination="@+id/loginFragment" />
+
+        <action
+            android:id="@+id/action_profileFragment_to_MyVehiclesFragment"
+            app:destination="@+id/myVehiclesFragment" />
+
+        <action
+            android:id="@+id/action_profileFragment_to_AccountFragment"
+            app:destination="@+id/accountFragment" />
+
+        <action
+            android:id="@+id/action_profileFragment_to_GamificationFragment"
+            app:destination="@+id/gamificationSettingsFragment" />
+
+        <action
+            android:id="@+id/action_profileFragment_to_MyChargingStationsFragment"
+            app:destination="@+id/myChargingStationsFragment" />
+
+        <action
+            android:id="@+id/action_profileFragment_to_PersonalInformationFragment"
+            app:destination="@+id/personalInformationFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.tdp.cycle.features.onboarding.LoginFragment"
+        android:label="loginFragment"
+        tools:layout="@layout/fragment_login">
+
+        <action
+            android:id="@+id/action_loginFragment_to_routesFragment"
+            app:destination="@+id/routesFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/myVehiclesFragment"
+        android:name="com.tdp.cycle.features.profile.my_vehicles.MyVehiclesFragment"
+        android:label="myVehiclesFragment"
+        tools:layout="@layout/fragment_my_vehicles">
+
+        <action
+            android:id="@+id/action_myVehicleFragment_to_addVehicleFragment"
+            app:destination="@+id/addVehicleFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/accountFragment"
+        android:name="com.tdp.cycle.features.profile.settings.SettingsFragment"
+        android:label="accountFragment"
+        tools:layout="@layout/fragment_settings">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/gamificationSettingsFragment"
+        android:name="com.tdp.cycle.features.profile.gamification.GamificationSettingsFragment"
+        android:label="gamificationSettingsFragment"
+        tools:layout="@layout/fragment_gamification_settings">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/myChargingStationsFragment"
+        android:name="com.tdp.cycle.features.profile.my_charging_stations.MyChargingStationsFragment"
+        android:label="myChargingStationsFragment"
+        tools:layout="@layout/fragment_my_charging_stations">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/personalInformationFragment"
+        android:name="com.tdp.cycle.features.profile.personal_information.PersonalInformationFragment"
+        android:label="personalInformationFragment"
+        tools:layout="@layout/fragment_personal_information">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/addVehicleFragment"
+        android:name="com.tdp.cycle.features.profile.my_vehicles.AddVehicleFragment"
+        android:label="addVehicleFragment"
+        tools:layout="@layout/fragment_add_vehicle">
+
+    </fragment>
+
+</navigation>

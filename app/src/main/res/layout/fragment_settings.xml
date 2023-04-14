@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/common_screen_padding">
+
+    <TextView
+        android:id="@+id/settingsTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        style="@style/CycleTitleStyle"
+        android:text="Settings" />
+
+    <TextView
+        android:id="@+id/settingsNotificationsTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Push notifications"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/settingsNotificationsSwitch"
+        style="@style/CycleRegularTextStyle"
+        android:textStyle="bold"
+        android:lineSpacingExtra="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Allow push notifications"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settingsNotificationsTitle"
+        android:layout_marginTop="8dp"
+        style="@style/CycleRegularTextStyle"
+        android:lineSpacingExtra="8dp" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/settingsNotificationsSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settingsTitle"
+        android:layout_marginTop="@dimen/common_extra_extra_large_margin"
+        android:theme="@style/SCBSwitch"
+        android:thumb="@drawable/thumb_switch"
+        app:track="@drawable/track_switch" />
+
+    <TextView
+        android:id="@+id/settingsAllowTollTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Allow toll roads"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/settingsAllowTollSwitch"
+        style="@style/CycleRegularTextStyle"
+        android:textStyle="bold"
+        android:lineSpacingExtra="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Allow toll roads"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settingsAllowTollTitle"
+        android:layout_marginTop="8dp"
+        style="@style/CycleRegularTextStyle"
+        android:lineSpacingExtra="8dp" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/settingsAllowTollSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settingsNotificationsSwitch"
+        android:layout_marginTop="@dimen/common_extra_extra_large_margin"
+        android:theme="@style/SCBSwitch"
+        android:thumb="@drawable/thumb_switch"
+        app:track="@drawable/track_switch" />
+
+    <TextView
+        android:id="@+id/settingsMultipleChargingTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Allow multiple charging stations stops"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/settingsMultipleChargingSwitch"
+        style="@style/CycleRegularTextStyle"
+        android:textStyle="bold"
+        android:lineSpacingExtra="8dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Allow stopping at 2+ charging stations"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settingsMultipleChargingTitle"
+        android:layout_marginTop="8dp"
+        style="@style/CycleRegularTextStyle"
+        android:lineSpacingExtra="8dp" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/settingsMultipleChargingSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/settingsAllowTollSwitch"
+        android:layout_marginTop="@dimen/common_extra_extra_large_margin"
+        android:theme="@style/SCBSwitch"
+        android:thumb="@drawable/thumb_switch"
+        app:track="@drawable/track_switch" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
