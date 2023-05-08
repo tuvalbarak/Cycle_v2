@@ -102,7 +102,7 @@
         android:id="@+id/profileMyStations"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="My Charging Stations"
+        android:text="My Charging Station"
         app:layout_constraintTop_toBottomOf="@id/profileMyVehiclesSeparator"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -192,7 +192,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@id/profileCrystalsIcon"
         app:layout_constraintStart_toStartOf="@id/profileCrystalsIcon"
-        android:text="20,000"
+        tools:text="20,000"
         style="@style/CycleTitleStyle" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

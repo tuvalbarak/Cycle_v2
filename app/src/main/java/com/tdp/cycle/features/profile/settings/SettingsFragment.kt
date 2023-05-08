@@ -38,17 +38,24 @@ class SettingsFragment : CycleBaseFragment<FragmentSettingsBinding>(FragmentSett
 
     private fun initObservers() {
 
-        settingsViewModel.allowPushNotifications.observe(viewLifecycleOwner) { isChecked ->
-            binding?.settingsNotificationsSwitch?.isChecked = isChecked
+        binding?.apply {
+            settingsViewModel.allowPushNotifications.observe(viewLifecycleOwner) { isChecked ->
+                settingsNotificationsSwitch.isChecked = isChecked
+            }
+
+            settingsViewModel.allowTollRoads.observe(viewLifecycleOwner) { isChecked ->
+                settingsAllowTollSwitch.isChecked = isChecked
+            }
+
+            settingsViewModel.allowMultipleChargingStops.observe(viewLifecycleOwner) { isChecked ->
+                settingsMultipleChargingSwitch.isChecked = isChecked
+            }
+
+            settingsViewModel.progressData.observe(viewLifecycleOwner) { isLoading ->
+                handleProgress(isLoading)
+            }
         }
 
-        settingsViewModel.allowTollRoads.observe(viewLifecycleOwner) { isChecked ->
-            binding?.settingsAllowTollSwitch?.isChecked = isChecked
-        }
-
-        settingsViewModel.allowMultipleChargingStops.observe(viewLifecycleOwner) { isChecked ->
-            binding?.settingsMultipleChargingSwitch?.isChecked = isChecked
-        }
     }
 
 }

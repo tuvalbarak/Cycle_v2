@@ -10,7 +10,9 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -20,14 +22,14 @@ import com.google.android.gms.maps.model.*
 import com.google.maps.android.PolyUtil
 import com.tdp.cycle.R
 import com.tdp.cycle.bases.CycleBaseFragment
+import com.tdp.cycle.common.safeNavigate
 import com.tdp.cycle.common.toLocation
 import com.tdp.cycle.databinding.FragmentRoutesBinding
-import com.tdp.cycle.models.ChargingStationRealModel
 import com.tdp.cycle.models.StationAccess
+import com.tdp.cycle.models.cycle_server.ChargingStation
 import com.tdp.cycle.models.responses.Route
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.math.roundToInt
-import kotlin.random.Random
 
 @AndroidEntryPoint
 class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBinding::inflate), OnMapReadyCallback {
@@ -36,7 +38,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
     private var googleMap: GoogleMap? = null
     private var currentLocationString: String? = null
-    private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStationRealModel?>>()
+    private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStation?>>()
     private var myMarker: Marker? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -150,22 +152,21 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
     }
 
-    private fun markChargingStations(chargingStations: List<ChargingStationRealModel?>?) {
+    private fun markChargingStations(chargingStations: List<ChargingStation?>?) {
         chargingStations?.forEach { chargingStation ->
-            val latlng = LatLng(chargingStation?.lat ?: 0.0, chargingStation?.lng ?: 0.0)
-            val icon = when(chargingStation?.station_access) {
-                StationAccess.PRIVATE.value -> svgToBitmap(R.drawable.charging_station_private)
-                StationAccess.PUBLIC.value -> svgToBitmap(R.drawable.charging_station_public)
-                else -> svgToBitmap(R.drawable.charging_station_public)
-            }
+            val latlng = LatLng(chargingStation?.lat?.toDouble() ?: 0.0, chargingStation?.lng?.toDouble() ?: 0.0)
+            val icon =
+                if(chargingStation?.isPrivate == true) svgToBitmap(R.drawable.charging_station_private)
+                else svgToBitmap(R.drawable.charging_station_public)
 
             val marker = googleMap?.addMarker(
                 MarkerOptions()
                     .position(latlng)
-                    .title(chargingStation?.station_name)
-                    .snippet(chargingStation?.station_access ?: "")
+                    .title(chargingStation?.name)
+//                    .snippet(chargingStation?.station_access ?: "")
                     .icon(icon)
             )
+            marker?.tag = chargingStation
             stationsMarkers.add(Pair(marker, chargingStation))
         }
     }
@@ -183,6 +184,14 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
+        googleMap?.setOnMarkerClickListener { marker ->
+            val chargingStation = marker.tag as? ChargingStation
+            findNavController().safeNavigate(
+                RoutesFragmentDirections.actionRoutesFragmentToChargingStationFragment(chargingStation)
+            )
+
+            true
+        }
         handleCurrentLocation(true)
     }
 
@@ -284,7 +293,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private fun removeUnnecessaryStations() {
         //Removing all stations except the chosen one
         stationsMarkers.forEach { markerAndStation ->
-            if(markerAndStation.second?.station_id != mapsViewModel.bestStation.value?.station_id) {
+            if(markerAndStation.second?.id != mapsViewModel.bestStation.value?.id) {
                 markerAndStation.first?.remove()
             }
         }

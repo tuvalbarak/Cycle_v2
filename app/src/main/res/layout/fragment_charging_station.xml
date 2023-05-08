@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:padding="@dimen/common_screen_padding">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="@dimen/common_medium_margin"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/chargingStationSendMessage">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ImageView
+                android:id="@+id/chargingStationImage"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:src="@drawable/placeholder_charging_station" />
+
+            <TextView
+                android:id="@+id/chargingStationName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationImage"
+                app:layout_constraintStart_toStartOf="parent"
+                tools:text="Tuval's Station"
+                style="@style/CycleTitleStyle" />
+
+            <TextView
+                android:id="@+id/chargingStationCondition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationName"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="@dimen/common_large_margin"
+                tools:text="Available"
+                app:drawableStartCompat="@drawable/ic_status"
+                android:gravity="center"
+                style="@style/CycleRegularTextStyle"
+                android:drawablePadding="2dp"/>
+
+            <TextView
+                android:id="@+id/chargingStationRating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationCondition"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="@dimen/common_large_margin"
+                tools:text="4.3 (12)"
+                app:drawableStartCompat="@drawable/ic_blue_star"
+                android:gravity="center"
+                style="@style/CycleRegularTextStyle" />
+
+            <TextView
+                android:id="@+id/chargingStationAddress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationRating"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="@dimen/common_large_margin"
+                tools:text="Hameri 19, Givataim"
+                app:drawableStartCompat="@drawable/ic_location"
+                android:gravity="center"
+                style="@style/CycleRegularTextStyle" />
+
+            <TextView
+                android:id="@+id/chargingStationPrice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationAddress"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="@dimen/common_large_margin"
+                tools:text="30$"
+                app:drawableStartCompat="@drawable/ic_price"
+                android:gravity="center|end"
+                style="@style/CycleRegularTextStyle"
+                android:maxLines="1"/>
+
+            <TextView
+                android:id="@+id/chargingStationPower"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationPrice"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="@dimen/common_large_margin"
+                tools:text="24V"
+                app:drawableStartCompat="@drawable/ic_power"
+                android:gravity="center"
+                style="@style/CycleRegularTextStyle" />
+
+            <TextView
+                android:id="@+id/chargingStationChargers"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationPower"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="@dimen/common_large_margin"
+                tools:text="4 Chargers"
+                app:drawableStartCompat="@drawable/ic_charger"
+                android:gravity="center"
+                style="@style/CycleRegularTextStyle" />
+
+            <TextView
+                android:id="@+id/chargingStationCommentsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Comments"
+                android:layout_marginTop="@dimen/common_large_margin"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationChargers"
+                app:layout_constraintStart_toStartOf="parent"
+                style="@style/CycleRegularTextStyle"
+                android:textStyle="bold" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/chargingStationCommentsRV"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationCommentsTitle"
+                android:layout_marginTop="@dimen/common_small_margin"
+                tools:listitem="@layout/item_comment" />
+
+            <EditText
+                android:id="@+id/chargingStationLeaveAComment"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Leave a coment..."
+                app:layout_constraintTop_toBottomOf="@id/chargingStationCommentsRV"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/chargingStationCommentIcon"
+                android:background="@drawable/primary_background"
+                android:layout_marginTop="@dimen/common_large_margin"
+                android:padding="@dimen/common_small_padding"
+                android:layout_marginEnd="@dimen/common_small_margin"/>
+
+            <ImageView
+                android:id="@+id/chargingStationCommentIcon"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/chargingStationLeaveAComment"
+                app:layout_constraintBottom_toBottomOf="@id/chargingStationLeaveAComment"
+                android:src="@drawable/ic_send" />
+
+            <RatingBar
+                android:id="@+id/chargingStationRatingBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationCommentIcon"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/chargingStationLeaveARating"
+                android:layout_marginEnd="@dimen/common_medium_margin"
+                android:stepSize="1"
+                android:numStars="5"
+                app:layout_constraintHorizontal_bias="0"
+                android:layout_marginTop="@dimen/common_extra_extra_large_margin" />
+
+            <com.tdp.cycle.common.customviews.MTPrimaryButton
+                android:id="@+id/chargingStationLeaveARating"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="@id/chargingStationRatingBar"
+                app:layout_constraintBottom_toBottomOf="@id/chargingStationRatingBar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:MTbackgroundSelector="@drawable/primary_btn_background_selector"
+                app:MTtextColorSelector="@drawable/primary_btn_text_color_selector"
+                app:MTtitle="Rate"
+                app:MTisTextBold="true"
+                app:MTtextSize="13" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <com.tdp.cycle.common.customviews.MTPrimaryButton
+        android:id="@+id/chargingStationSendMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:MTtextSize="13"
+        app:MTbackgroundSelector="@drawable/primary_btn_background_selector"
+        app:MTtextColorSelector="@drawable/primary_btn_text_color_selector"
+        app:MTtitle="Message Tuval"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:MTisTextBold="true" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

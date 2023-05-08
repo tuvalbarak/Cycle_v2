@@ -1,17 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="@dimen/common_screen_padding">
 
-    <TextView
-        android:id="@+id/personalInformationTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        style="@style/CycleTitleStyle"
-        android:text="Personal Information"/>
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/personalInformationHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
+                <TextView
+                    style="@style/CycleTitleStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Personal Information"
+                    android:textColor="@color/black" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/personalInformationImage"
+                android:layout_width="62dp"
+                android:layout_height="62dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="25.9dp"
+                android:background="@drawable/ic_place_holder_oval"
+                android:gravity="start"
+                android:src="@drawable/ic_place_holder_oval"
+                app:layout_constraintTop_toBottomOf="@id/personalInformationHeader"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                />
+
+            <com.tdp.cycle.common.customviews.MTPrimaryButton
+                android:id="@+id/personalInformationChangeImage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:MTtitle="Change profile picture"
+                android:paddingTop="2dp"
+                app:MTtextSize="13"
+                app:MTstrokeTextColor="@color/link"
+                app:layout_constraintTop_toBottomOf="@id/personalInformationImage"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/personalInformationName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13.2dp"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTtitle="Name"
+                app:layout_constraintTop_toBottomOf="@id/personalInformationChangeImage"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/personalInformationEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13.2dp"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTisEnabled="false"
+                app:MTtitle="Email"
+                app:layout_constraintTop_toBottomOf="@id/personalInformationName"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/personalInformationPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="13.2dp"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTtitle="Phone"
+                app:layout_constraintTop_toBottomOf="@id/personalInformationEmail"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <com.tdp.cycle.common.customviews.MTPrimaryButton
+        android:id="@+id/personalInformationSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="38.1dp"
+        app:MTtextSize="13"
+        app:MTbackgroundSelector="@drawable/primary_btn_background_selector"
+        app:MTtextColorSelector="@drawable/primary_btn_text_color_selector"
+        app:MTtitle="Save"
+        android:layout_gravity="bottom"/>
+
+</FrameLayout>

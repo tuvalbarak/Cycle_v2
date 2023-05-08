@@ -1,126 +1,83 @@
 package com.tdp.cycle.repositories
 
 import android.content.SharedPreferences
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
-import com.google.gson.Gson
 import com.tdp.cycle.common.DriverPreferencesConsts
-import com.tdp.cycle.common.DriverPreferencesConsts.lastSelectedEV
-import com.tdp.cycle.local.CycleDB
-import com.tdp.cycle.models.ElectricVehicleModel
-import com.tdp.cycle.models.User
-import com.tdp.cycle.models.cycle_server.Driver
-import com.tdp.cycle.models.cycle_server.ElectricVehicle
-import com.tdp.cycle.models.cycle_server.VehicleMeta
+import com.tdp.cycle.common.isNull
+import com.tdp.cycle.models.cycle_server.User
+import com.tdp.cycle.models.cycle_server.UserRequest
 import com.tdp.cycle.remote.ICycleService
+import com.tdp.cycle.remote.networking.LocalResponseError
+import com.tdp.cycle.remote.networking.LocalResponseSuccess
+import com.tdp.cycle.remote.networking.RemoteResponseError
+import com.tdp.cycle.remote.networking.RemoteResponseHandler
+import com.tdp.cycle.remote.networking.RemoteResponseSuccess
+import com.tdp.cycle.remote.networking.ResponseResult
+import com.tdp.cycle.remote.networking.ResponseSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class UserRepository(
-    private val db: CycleDB,
-    private val sharedPReferences: SharedPreferences,
-    private val cycleService: ICycleService
+    private val cycleService: ICycleService,
+    private val remoteResponseHandler: RemoteResponseHandler,
+    private val sharedPreferences: SharedPreferences
 ) {
 
-    /**
-     * To update user in Firebase:
-     *  val user = Firebase.auth.currentUser
+    private var currentUser: User? = null
+    private var currentUserResponse: ResponseResult<User>? = null
 
-        val profileUpdates = userProfileChangeRequest {
-            displayName = "Jane Q. User"
-            photoUri = Uri.parse("https://example.com/jane-q-user/profile.jpg")
-        }
-
-        user!!.updateProfile(profileUpdates).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Log.d(TAG, "User profile updated.")
+    suspend fun updateUser(userRequest: UserRequest) = currentUser?.id?.let { userId ->
+        remoteResponseHandler.safeApiCall {
+            cycleService.updateUser(userId, userRequest)
             }
         }
-     * */
 
-
-    suspend fun insertUser(user: User) {
-        db.userDao().insertUser(user)
+    suspend fun getUserMe(fetchFromServer: Boolean = false): ResponseResult<User>? {
+        if (currentUser.isNull() || fetchFromServer) {
+            currentUserResponse = fetchUserMe()
+        }
+        return currentUserResponse
     }
 
-    suspend fun upsertUser(user: User) {
-        db.userDao().upsertUser(user)
+    private suspend fun fetchUserMe(): ResponseResult<User> {
+        remoteResponseHandler.safeApiCall {
+            cycleService.getUserMe()
+        }.also { response ->
+            if(response is RemoteResponseSuccess) {
+                currentUser = response.data?.copy()
+                currentUserResponse = response
+                (currentUserResponse as? RemoteResponseSuccess)?.data = currentUser
+            }
+            return response
+        }
     }
-
-    suspend fun updateUser(user: User) {
-        db.userDao().updateUser(user)
-    }
-
-    suspend fun deleteUser(user: User) {
-        db.userDao().deleteUser(user)
-    }
-
-    suspend fun getUser() = db.userDao().getUser()
 
     suspend fun logout() {
-        Firebase.auth.signOut()
-        db.clearAllTables()
+//        db.clearAllTables()
+        sharedPreferences.edit().clear().apply()
     }
 
     fun updatePushNotificationsInSP(pushNotifications: Boolean) {
-        sharedPReferences.edit().putBoolean(DriverPreferencesConsts.pushNotifications, pushNotifications).apply()
+        sharedPreferences.edit().putBoolean(DriverPreferencesConsts.pushNotifications, pushNotifications).apply()
     }
 
     fun updateMultipleChargingStopsInSP(multipleChargingStops: Boolean) {
-        sharedPReferences.edit().putBoolean(DriverPreferencesConsts.multipleChargingStops, multipleChargingStops).apply()
+        sharedPreferences.edit().putBoolean(DriverPreferencesConsts.multipleChargingStops, multipleChargingStops).apply()
     }
 
     fun updatePushAllowTollRoadsInSP(allowTollRoads: Boolean) {
-        sharedPReferences.edit().putBoolean(DriverPreferencesConsts.allowTollRoads, allowTollRoads).apply()
+        sharedPreferences.edit().putBoolean(DriverPreferencesConsts.allowTollRoads, allowTollRoads).apply()
     }
 
     suspend fun getArePushNotificationsAllowed() = withContext(Dispatchers.IO) {
-        sharedPReferences.getBoolean(DriverPreferencesConsts.pushNotifications, false)
+        sharedPreferences.getBoolean(DriverPreferencesConsts.pushNotifications, false)
     }
 
     suspend fun getAreMultipleChargingStationsAllowed() = withContext(Dispatchers.IO) {
-        sharedPReferences.getBoolean(DriverPreferencesConsts.multipleChargingStops, false)
+        sharedPreferences.getBoolean(DriverPreferencesConsts.multipleChargingStops, false)
     }
 
     suspend fun getAreTollRoadsAllowed() = withContext(Dispatchers.IO) {
-        sharedPReferences.getBoolean(DriverPreferencesConsts.allowTollRoads, false)
-    }
-
-    suspend fun updateMyVehiclesList(electricVehicle: ElectricVehicle?) {
-        val updatedList = mutableListOf(1L, 2L, 3L)
-        electricVehicle?.vehicleMetaId?.let {
-            updatedList.add(it)
-            cycleService.updateDriver(
-                1,
-                Driver(
-                    name = "Tuval Barak",
-                    phone = "972544873078",
-                    crystalsBalance = 20000,
-                    email = "baraktuval@gmail.com",
-                    lastVehicleUsedId = 2,
-                    vehiclesHistory = updatedList
-                )
-            )
-        }
-
-    }
-
-    suspend fun updateLastSelectedEV(lastSelectedEV: VehicleMeta) {
-        withContext(Dispatchers.IO) {
-            Gson().toJson(lastSelectedEV)?.let {
-                sharedPReferences.edit().putString(DriverPreferencesConsts.lastSelectedEV, it).apply()
-            }
-        }
-    }
-
-    suspend fun getLastSelectedEV() = withContext(Dispatchers.IO) {
-        try {
-            val electricVehicleJson = sharedPReferences.getString(lastSelectedEV, "")
-            val state = Gson().fromJson(electricVehicleJson, VehicleMeta::class.java)
-            state
-        } catch (e: Exception) {
-            null
-        }
+        sharedPreferences.getBoolean(DriverPreferencesConsts.allowTollRoads, false)
     }
 
 }

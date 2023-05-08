@@ -5,4 +5,8 @@ import com.tdp.cycle.databinding.FragmentGamificationSettingsBinding
 
 class GamificationSettingsFragment : CycleBaseFragment<FragmentGamificationSettingsBinding>(FragmentGamificationSettingsBinding::inflate) {
 
+//    viewModel.progressData.observe(viewLifecycleOwner) { isLoading ->
+//        handleProgress(isLoading)
+//    }
+
 }

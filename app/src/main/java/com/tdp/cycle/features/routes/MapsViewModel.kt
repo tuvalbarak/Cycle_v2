@@ -3,16 +3,18 @@ package com.tdp.cycle.features.routes
 import android.graphics.Color
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
-
 import com.google.android.gms.maps.model.LatLng
 import com.tdp.cycle.bases.CycleBaseViewModel
 import com.tdp.cycle.common.deg2rad
 import com.tdp.cycle.common.rad2deg
-import com.tdp.cycle.models.ChargingStationRealModel
-import com.tdp.cycle.models.User
 import com.tdp.cycle.models.cycle_server.Battery
+import com.tdp.cycle.models.cycle_server.ChargingStation
+import com.tdp.cycle.models.cycle_server.User
 import com.tdp.cycle.models.cycle_server.VehicleMeta
 import com.tdp.cycle.models.responses.*
+import com.tdp.cycle.remote.networking.RemoteResponseError
+import com.tdp.cycle.remote.networking.RemoteResponseSuccess
+import com.tdp.cycle.remote.networking.getErrorMsgByType
 import com.tdp.cycle.repositories.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -26,29 +28,23 @@ fun List<Double>.average(): Double {
         sum() / size
     }
 }
-fun List<Double>.standardDeviation(): Double {
-    val avg = average()
-    return sqrt(map { (it - avg) * (it - avg) }.sum() / size)
-}
 
 @HiltViewModel
 class MapsViewModel @Inject constructor(
     private val mapsRepository: MapsRepository,
-    private val chargingStationsRepository: ChargingStationsRepository,
-    private val electricVehiclesRepository: ElectricVehiclesRepository,
     private val weatherRepository: WeatherRepository,
     private val userRepository: UserRepository,
-    private val cycleRepository: CycleRepository
+    private val chargingStationsRepository: ChargingStationsRepository
 ) : CycleBaseViewModel() {
 
-    val user = MutableLiveData<User>()
+    val user = MutableLiveData<User?>()
 //    val routes = MutableLiveData<List<Route?>>()
     val batteryPercentage = MutableLiveData<Double>()
     val bestRoute = MutableLiveData<Route>()
     val geocode = MutableLiveData<List<MapsGeocodeResults?>?>()
     val elevationDifference = MutableLiveData<Double?>()
-    val chargingStations = chargingStationsRepository.getStations()
-    val bestStation = MutableLiveData<ChargingStationRealModel?>()
+    val chargingStations = MutableLiveData<List<ChargingStation?>?>()
+    val bestStation = MutableLiveData<ChargingStation?>()
 //    val electricVehiclesEvent = MutableLiveData<List<ElectricVehicleModel>>()
     val myEvEvent = MutableLiveData<VehicleMeta>()
     val currentUserLocation = MutableLiveData(false)
@@ -61,10 +57,19 @@ class MapsViewModel @Inject constructor(
 
         safeViewModelScopeIO {
             progressData.startProgress()
-
-            chargingStationsRepository.fetchChargingStationsLocations()
+            when(val response = chargingStationsRepository.getChargingStations()) {
+                is RemoteResponseSuccess -> chargingStations.postValue(response.data)
+                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                else -> { }
+            }
+//            chargingStationsRepositoryDepricated.fetchChargingStationsLocations()
             updateCurrentLocation()
-            user.postValue(userRepository.getUser())
+            when(val response = userRepository.getUserMe()) {
+                is RemoteResponseSuccess -> user.postValue(response.data)
+                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                else -> { }
+            }
+
             //Currently no obd integration -> always false.
             isObdAvailable.postValue(false)
 
@@ -92,9 +97,9 @@ class MapsViewModel @Inject constructor(
     }
 
     fun getMyEv() {
-        safeViewModelScopeIO {
-            myEvEvent.postValue(userRepository.getLastSelectedEV())
-        }
+//        safeViewModelScopeIO {
+//            myEvEvent.postValue(userRepositoryDepricated.getLastSelectedEV())
+//        }
     }
 
     fun updateBatteryPercentage(percentage: Double?) {
@@ -191,26 +196,26 @@ class MapsViewModel @Inject constructor(
                 calculateElevationDifference(originLatLng, destinationLatLng)
 
                 val recommendedRoute = getBestRouteAccordingToGoogle(directionsResponse.body()?.routes)
-                val bestStation = recommendedRoute?.let {
-                    val currentEv = userRepository.getLastSelectedEV()
-                    val currentBattery = cycleRepository.getBatteryById(currentEv?.id)
-                    getBestStation(recommendedRoute, currentBattery)
-                }
+//                val bestStation = recommendedRoute?.let {
+//                    val currentEv = userRepositoryDepricated.getLastSelectedEV()
+//                    val currentBattery = cycleRepository.getBatteryById(currentEv?.id)
+//                    getBestStation(recommendedRoute, currentBattery)
+//                }
 
                 bestStation?.let {
                     //Need to stop
-                    val waypoints = bestStation.getLocation().toLatLngFormat()
-                    val modifiedDirectionsResponse = mapsRepository.getDirections(
-                        origin = origin,
-                        destination = destination,
-                        waypoints = "via:${waypoints}"
-                    )
+//                    val waypoints = bestStation.getLocation().toLatLngFormat()
+//                    val modifiedDirectionsResponse = mapsRepository.getDirections(
+//                        origin = origin,
+//                        destination = destination,
+//                        waypoints = "via:${waypoints}"
+//                    )
 
-                    if (modifiedDirectionsResponse.isSuccessful) {
-                        getBestRouteAccordingToGoogle(modifiedDirectionsResponse.body()?.routes)?.let { route ->
-                            bestRoute.postValue(route)
-                        }
-                    }
+//                    if (modifiedDirectionsResponse.isSuccessful) {
+//                        getBestRouteAccordingToGoogle(modifiedDirectionsResponse.body()?.routes)?.let { route ->
+//                            bestRoute.postValue(route)
+//                        }
+//                    }
 
                 } ?: run {
                     //Don't need to stop
@@ -229,7 +234,7 @@ class MapsViewModel @Inject constructor(
     // Range(KM) - 345
     // Capacity - 57,500
     // Current percentage - 15%
-    private fun getBestStation(route: Route, battery: Battery?): ChargingStationRealModel? {
+    private fun getBestStation(route: Route, battery: Battery?): ChargingStation? {
         val currentBatteryConsumption = battery?.consumptionPerKm ?: 0
         val drivingDirection = calculateRadiansBetweenTwoPoints(route.legs?.firstOrNull()?.startLocation, route.legs?.lastOrNull()?.endLocation)
         val windEffect = calculateWindEffect(drivingDirection, weather.value?.current?.windDegree ?: 0.0, weather.value?.current?.windKph ?: 0.0)
@@ -264,12 +269,12 @@ class MapsViewModel @Inject constructor(
     data class RouteStationDistance(
         var distanceFromRoute: Double,
         var distanceFromOrigin: Double,
-        var station: ChargingStationRealModel
+        var station: ChargingStation
     )
 
-    private fun findStationWithinKm(mustStopBeforeKM: Double, route: Route): ChargingStationRealModel? {
+    private fun findStationWithinKm(mustStopBeforeKM: Double, route: Route): ChargingStation? {
         var minDistanceBetweenStepAndStation = Double.MAX_VALUE
-        var currentBestStation: ChargingStationRealModel? = null
+        var currentBestStation: ChargingStation? = null
         val distances = mutableListOf<RouteStationDistance>()
 
         // Going through all legs (not sure - think Leg is a path along the route - may be relevant if we have stops in our root)
@@ -290,21 +295,21 @@ class MapsViewModel @Inject constructor(
                                             calculateDistance(
                                                 chargingStationLat,
                                                 chargingStationLng,
-                                                stepLat,
-                                                stepLng
+                                                stepLat.toFloat(),
+                                                stepLng.toFloat()
                                             )
                                         val distanceFromOrigin =
                                             calculateDistance(
                                                 chargingStationLat,
                                                 chargingStationLng,
-                                                origin.latitude,
-                                                origin.longitude
+                                                origin.latitude.toFloat(),
+                                                origin.longitude.toFloat()
                                             )
 
                                         distances.add(
                                             RouteStationDistance(
-                                                currentDistanceBetweenStepAndStation,
-                                                distanceFromOrigin,
+                                                currentDistanceBetweenStepAndStation.toDouble(),
+                                                distanceFromOrigin.toDouble(),
                                                 chargingStation
                                             )
 
@@ -313,8 +318,7 @@ class MapsViewModel @Inject constructor(
                                         // If we found better station
                                         if (currentDistanceBetweenStepAndStation < minDistanceBetweenStepAndStation) {
                                             // Saving new params
-                                            minDistanceBetweenStepAndStation =
-                                                currentDistanceBetweenStepAndStation
+                                            minDistanceBetweenStepAndStation = currentDistanceBetweenStepAndStation.toDouble()
                                             currentBestStation = chargingStation
                                         }
                                     }
@@ -391,11 +395,11 @@ class MapsViewModel @Inject constructor(
 //        }
     }
 
-    private fun handleFoundBestStation(best: ChargingStationRealModel?): ChargingStationRealModel? {
+    private fun handleFoundBestStation(best: ChargingStation?): ChargingStation? {
         bestStation.postValue(best)
 
         val currentChargingStations = chargingStations.value?.toMutableList()
-        currentChargingStations?.find { it?.station_id == best?.station_id }?.let {
+        currentChargingStations?.find { it?.id == best?.id }?.let {
             currentChargingStations.remove(best)
             best?.distanceFromRoute = best?.distanceFromRoute
             currentChargingStations.add(best)
@@ -648,7 +652,7 @@ class MapsViewModel @Inject constructor(
     private fun findClosestChargingStationToRoute(routes: List<Route?>?): List<Route?>? {
 
         var minDistanceBetweenStepAndStation = Double.MAX_VALUE
-        var currentBestStation: ChargingStationRealModel? = null
+        var currentBestStation: ChargingStation? = null
         var currentBestRoute: Route? = null
         //distances list is just for debugging:
         val distances = mutableSetOf<Pair<Double, String?>>()
@@ -671,16 +675,16 @@ class MapsViewModel @Inject constructor(
                                         val currentDistanceBetweenStepAndStation = calculateDistance(
                                             chargingStationLat,
                                             chargingStationLng,
-                                            stepLat,
-                                            stepLng
+                                            stepLat.toFloat(),
+                                            stepLng.toFloat()
                                         )
                                         // Saving all distances just for debugging
-                                        distances.add(Pair(currentDistanceBetweenStepAndStation, chargingStation.station_name))
+                                        distances.add(Pair(currentDistanceBetweenStepAndStation.toDouble(), chargingStation.name))
 
                                         // If we found better station
                                         if(currentDistanceBetweenStepAndStation < minDistanceBetweenStepAndStation) {
                                             // Saving new params
-                                            minDistanceBetweenStepAndStation = currentDistanceBetweenStepAndStation
+                                            minDistanceBetweenStepAndStation = currentDistanceBetweenStepAndStation.toDouble()
                                             currentBestStation = chargingStation
                                             currentBestRoute = route
                                         }
@@ -703,7 +707,7 @@ class MapsViewModel @Inject constructor(
         bestStation.postValue(currentBestStation)
 
         val currentChargingStations = chargingStations.value?.toMutableList()
-        currentChargingStations?.find { it?.station_id == currentBestStation?.station_id }?.let { best ->
+        currentChargingStations?.find { it?.id == currentBestStation?.id }?.let { best ->
             currentChargingStations.remove(best)
             best.distanceFromRoute = currentBestStation?.distanceFromRoute
             currentChargingStations.add(best)
@@ -714,12 +718,12 @@ class MapsViewModel @Inject constructor(
     }
 
     // Returns the distance in KMs between 2 points
-    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    private fun calculateDistance(lat1: Float, lon1: Float, lat2: Float, lon2: Float): Float {
         val theta = lon1 - lon2
         var dist = sin(lat1.deg2rad()) * sin(lat2.deg2rad()) + cos(lat1.deg2rad()) * cos(lat2.deg2rad()) * cos(theta.deg2rad())
         dist = acos(dist)
         dist = dist.rad2deg()
-        dist *= 60 * 1.1515 * 1.609344
+        dist *= 60f * 1.1515f * 1.609344f
         return dist
     }
 
@@ -742,356 +746,3 @@ class MapsViewModel @Inject constructor(
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//package com.tdp.cycle.features.routes
-//
-//import android.graphics.Color
-//import android.util.Log
-//import androidx.lifecycle.MutableLiveData
-//
-//import com.google.android.gms.maps.model.LatLng
-//import com.tdp.cycle.bases.CycleBaseViewModel
-//import com.tdp.cycle.common.ProgressData
-//import com.tdp.cycle.common.deg2rad
-//import com.tdp.cycle.common.rad2deg
-//import com.tdp.cycle.models.ChargingStationRealModel
-//import com.tdp.cycle.models.ElectricVehicleModel
-//import com.tdp.cycle.models.User
-//import com.tdp.cycle.models.UserServer
-//import com.tdp.cycle.models.responses.Location
-//import com.tdp.cycle.models.responses.MapsGeocodeResults
-//import com.tdp.cycle.models.responses.Route
-//import com.tdp.cycle.models.responses.WeatherResponse
-//import com.tdp.cycle.repositories.*
-//import dagger.hilt.android.lifecycle.HiltViewModel
-//import kotlinx.coroutines.Dispatchers
-//import kotlinx.coroutines.delay
-//import kotlinx.coroutines.launch
-//import javax.inject.Inject
-//import kotlin.math.acos
-//import kotlin.math.cos
-//import kotlin.math.sin
-//
-//fun Location.toLatLngFormat() = lat?.toString() + "," + lng?.toString()
-//
-//
-//@HiltViewModel
-//class MapsViewModel @Inject constructor(
-//    private val mapsRepository: MapsRepository,
-//    private val chargingStationsRepository: ChargingStationsRepository,
-//    private val electricVehiclesRepository: ElectricVehiclesRepository,
-//    private val weatherRepository: WeatherRepository,
-//    private val userRepository: UserRepository,
-//    private val cycleRepository: CycleRepository
-//) : CycleBaseViewModel() {
-//
-//    val user = MutableLiveData<User>()
-//    val routes = MutableLiveData<List<Route?>>()
-//    val bestRoute = MutableLiveData<Route>()
-//    val geocode = MutableLiveData<List<MapsGeocodeResults?>?>()
-//    val elevationDifference = MutableLiveData<Double?>()
-//    val chargingStations = chargingStationsRepository.getStations()
-//    val bestStation = MutableLiveData<ChargingStationRealModel?>()
-//    val electricVehiclesEvent = MutableLiveData<List<ElectricVehicleModel>>()
-//    val currentUserLocation = MutableLiveData(false)
-//    val weather = MutableLiveData<WeatherResponse>()
-//    private var isInRoute = false
-//
-//    init {
-//        chargingStationsRepository.fetchChargingStationsLocations()
-//        electricVehiclesEvent.postValue(electricVehiclesRepository.getElectricVehicles())
-//        updateCurrentLocation()
-//
-//        safeViewModelScopeIO {
-//            progressData.startProgress()
-//            user.postValue(userRepository.getUser())
-//            progressData.endProgress()
-//
-////            cycleRepository.getUsers()
-//            cycleRepository.getUserById(1)
-////            cycleRepository.createUser(
-////                UserServer("tuval@monkeytech.co.il", "Tuval", "Barak", "tuval333", "passpass")
-////            )
-////            cycleRepository.getUsers()
-//        }
-//    }
-//
-//    fun getWeather(location: Location) {
-//        safeViewModelScopeIO {
-////            progressData.startProgress()
-//            val weatherResponse = weatherRepository.getWeather(location)
-//            if(weatherResponse.isSuccessful) {
-////                Log.d(TAG, weatherResponse.body().toString())
-//                weather.postValue(weatherResponse.body())
-//            }
-////            progressData.endProgress()
-//        }
-//    }
-//
-//    /**
-//     * If the user is currently on route --> update his location on the map every X seconds. */
-//    private fun updateCurrentLocation() {
-////        safeViewModelScopeIO {
-////            while(true) {
-////                delay(10000)
-////                if(isInRoute) {
-////                    currentUserLocation.postValue(true)
-////                }
-////            }
-////        }
-//    }
-//
-//    fun getDirections(origin: String, destination: String) {
-//        isInRoute = true
-//        safeViewModelScopeIO {
-//            progressData.startProgress()
-//
-//            //Routes received from Google
-//            val directionsResponse = mapsRepository.getDirections(
-//                origin = origin,
-//                destination = destination
-//            )
-//
-//            if(directionsResponse.isSuccessful) {
-//                val originLatLng = directionsResponse.body()?.routes?.firstOrNull()?.legs?.firstOrNull()?.startLocation
-//                val destinationLatLng = directionsResponse.body()?.routes?.firstOrNull()?.legs?.lastOrNull()?.endLocation
-//                calculateElevationDifference(originLatLng, destinationLatLng)
-//                val originalRoutes = findClosestChargingStationToRoute(directionsResponse.body()?.routes)
-//
-//                val waypoints = bestStation.value?.getLocation()?.toLatLngFormat()
-//                val modifiedDirectionsResponse = mapsRepository.getDirections(
-//                    origin = origin,
-//                    destination = destination,
-//                    waypoints = "via:${waypoints}"
-//                )
-//
-//                if(modifiedDirectionsResponse.isSuccessful) {
-//                    findClosestChargingStationToRoute(modifiedDirectionsResponse.body()?.routes)?.let { routes ->
-////                        routes.postValue(it)
-//                        routes.find { it?.isRouteSelected == true }?.let { route ->
-//                            //Route with stop at charging station
-//                            bestRoute.postValue(route)
-//                            progressData.endProgress()
-//                            return@safeViewModelScopeIO
-//                        }
-//                    }
-//                }
-//
-//                //If could not stop at charging station - use original route (without waypoint)
-//                originalRoutes?.let { routes ->
-////                    routes.postValue(it)
-//                    routes.find { it?.isRouteSelected == true }?.let { route ->
-//                        bestRoute.postValue(route)
-//                    }
-//                }
-//            }
-//            progressData.endProgress()
-//        }
-//    }
-//
-//    private fun calculateElevationDifference(origin: Location?, destination: Location?) {
-//        safeViewModelScopeIO {
-//            progressData.startProgress()
-//            val originElevationResponse = mapsRepository.getElevation(
-//                origin?.lat.toString() + "," + origin?.lng.toString()
-//            )
-//
-//            val destinationElevationResponse = mapsRepository.getElevation(
-//                destination?.lat.toString() + "," + destination?.lng.toString()
-//            )
-//
-//            val difference = destinationElevationResponse.body()?.mapsGeocodeResults?.firstOrNull()?.elevation?.toDoubleOrNull()?.minus(
-//                originElevationResponse.body()?.mapsGeocodeResults?.firstOrNull()?.elevation?.toDoubleOrNull() ?: 0.0
-//            ) ?: 0.0
-//
-//            elevationDifference.postValue(difference)
-//            progressData.endProgress()
-//        }
-//    }
-//
-//    fun getGeocode(latLng: LatLng) {
-//        safeViewModelScopeIO {
-////            progressData.startProgress()
-//            val res = latLng.latitude.toString() + "," + latLng.longitude.toString()
-//            val response = mapsRepository.getGeocode(latLng = res,)
-//            if(response.isSuccessful) {
-//                geocode.postValue(response.body()?.mapsGeocodeResults)
-//            }
-////            progressData.endProgress()
-//        }
-//    }
-//
-//    //I want the sum of all parameters' sum to be 100.
-//    //Calculating each param, while doing so --> giving each station the relevant score(for this param)
-//    //After finished calculating all params - sorting stations
-//    //First station is the best according to given param and weights
-//
-//    //Maybe to make it easier for Alpha - each parameter will have exactly one point --> the route with most votes will win
-//    // Battery sufficiency should overrule all the others
-//
-//    //100
-//    // Closest station - 50
-//    //
-//    //we
-//    //Also need to include - Temperature, elevation, battery attributes (percentage, projected percentage along the route),
-//    // wind, driver preferences, driver style, and fucking more.
-//
-//    //If battery is not sufficient
-//    //    find out out many kms it has, reduce some delta (i.e., 20%) - this will be the upper bound of station distance from origin
-//    //else
-//    //    we can use upper bound to be equal to the entire trip distance
-//    //
-//
-//    //We get 3 routes: R1, R2, R3.
-//    //each Route will have the following diferences:
-//        // Elevation differences in calculated from each leg
-//        // Are user's preferences satisfied
-//        //
-//
-//    //each Route will have the following same:
-//        // Initial battery
-//        // Battery status along the route
-//        //
-//
-//
-//    //Route has been chosen --> Current Battery supposed to last 100 KMs, route is 140 KMs.
-//    // Average battery consumption, driver characteristics (speed average, brakes usages per minute),
-//    // Temperature, Elevation, Wind,
-//
-//    //      Closest to path
-//    // A         1
-//    // B         3
-//    // C         2
-//
-//
-//    //Tesla Model Y:
-//        // Wh/KM - 167
-//        // Range(KM) - 345
-//        // Capacity - 57,500
-//
-//    private fun findClosestChargingStationToRoute(routes: List<Route?>?): List<Route?>? {
-//
-////        val maximumStationDistance =
-////            if(tripDistance > batteryKmsLeft * DELTA) batteryKmsLeft
-////            else tripDistance
-//
-//        var minDistanceBetweenStepAndStation = Double.MAX_VALUE
-//        var currentBestStation: ChargingStationRealModel? = null
-//        var currentBestRoute: Route? = null
-//        //distances list is just for debugging:
-//        val distances = mutableSetOf<Pair<Double, String?>>()
-//
-//        //Going through all routes
-//        routes?.forEach { route ->
-//            // Going through all legs (not sure - think Leg is a path along the route - may be relevant if we have stops in our root)
-//            route?.legs?.forEach { leg ->
-//                // Steps is all the turnovers we need to make along the route. e.g., פנה ימינה לרחוב המרי
-//                leg?.steps?.forEach { step ->
-//                    // Now crossing between all possible steps (from all possible routes & legs) and our charging stations
-//                    chargingStations.value?.forEach { chargingStation ->
-//                        // Making sure nothing is null
-//                        chargingStation?.lat?.let { chargingStationLat ->
-//                            chargingStation.lng?.let { chargingStationLng ->
-//                                step?.endLocation?.lat?.let { stepLat ->
-//                                    step.endLocation?.lng?.let { stepLng ->
-//
-//                                        // Getting current distant from stop to charging station
-//                                        val currentDistanceBetweenStepAndStation = calculateDistance(
-//                                            chargingStationLat,
-//                                            chargingStationLng,
-//                                            stepLat,
-//                                            stepLng
-//                                        )
-//                                        // Saving all distances just for debugging
-//                                        distances.add(Pair(currentDistanceBetweenStepAndStation, chargingStation.station_name))
-//
-//                                        // If we found better station
-//                                        if(currentDistanceBetweenStepAndStation < minDistanceBetweenStepAndStation) {
-//                                            // Saving new params
-//                                            minDistanceBetweenStepAndStation = currentDistanceBetweenStepAndStation
-//                                            currentBestStation = chargingStation
-//                                            currentBestRoute = route
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        val sortedDistances = distances.sortedBy { it.first }
-//
-//        // Going through all routes, isRouteSelected will be true only in the best route (so UI layer can decide what to do with it)
-//        routes?.forEach { route ->
-//            route?.isRouteSelected = (route == currentBestRoute)
-//        }
-//
-//        currentBestStation?.distanceFromRoute = sortedDistances.firstOrNull()?.first
-//        bestStation.postValue(currentBestStation)
-//
-//        val currentChargingStations = chargingStations.value?.toMutableList()
-//        currentChargingStations?.find { it?.station_id == currentBestStation?.station_id }?.let { best ->
-//            currentChargingStations.remove(best)
-//            best.distanceFromRoute = currentBestStation?.distanceFromRoute
-//            currentChargingStations.add(best)
-//            chargingStations.postValue(currentChargingStations)
-//        }
-//
-//        return routes
-//    }
-//
-//    // Returns the distance in KMs between 2 points
-//    private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-//        val theta = lon1 - lon2
-//        var dist = sin(lat1.deg2rad()) * sin(lat2.deg2rad()) + cos(lat1.deg2rad()) * cos(lat2.deg2rad()) * cos(theta.deg2rad())
-//        dist = acos(dist)
-//        dist = dist.rad2deg()
-//        dist *= 60 * 1.1515 * 1.609344
-//        return dist
-//    }
-//
-//    fun getRoutesColors() = mutableListOf(
-//        Color.argb(255, 200, 200, 200),
-//        Color.argb(255, 100, 100, 100),
-//        Color.argb(255, 0, 0, 0),
-//        Color.argb(255, 42, 123, 241),
-//        Color.argb(255, 58, 22, 188),
-//        Color.argb(255, 222, 11, 223),
-//        Color.argb(255, 105, 150, 30),
-//        Color.argb(255, 180, 44, 10),
-//    )
-//
-//    fun getSelectedRouteColor() = Color.argb(255, 48, 250, 2)
-//
-//
-//    companion object {
-//        private const val TAG = "MainViewModelTAG"
-//    }
-//
-//}

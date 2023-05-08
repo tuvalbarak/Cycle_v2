@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/MTprimaryEditTextLayoutRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:animateLayoutChanges="true"
+    android:background="@color/white"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/MTprimaryEditTextTitle"
+        style="@style/CycleRegularTextStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lineSpacingExtra="7.7dp"
+        android:paddingBottom="9dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="title" />
+
+    <LinearLayout
+        android:id="@+id/MTprimaryEditTextLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:background="@drawable/primary_background"
+        android:orientation="horizontal"
+        android:paddingVertical="10dp"
+        android:paddingStart="12dp"
+        android:paddingEnd="4dp">
+
+        <EditText
+            android:id="@+id/MTprimaryEditTextTextInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start|center"
+            android:layout_weight="1"
+            android:background="@null"
+            android:inputType="textMultiLine"
+            android:maxLength="64"
+            android:textColorHint="@color/light_grey"
+            android:textColor="@color/blackTextColor"
+            android:textCursorDrawable="@drawable/custom_text_cursor_primary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/MTprimaryEditTextTitle"
+            tools:hint="Annasmith@gmail.com"
+            android:scrollHorizontally="true" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/MTprimaryEditTextError"
+        style="@style/CycleRegularTextStyle"
+        android:textSize="12sp"
+        android:textColor="@android:color/holo_red_light"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:letterSpacing="0"
+        android:lineSpacingExtra="1sp"
+        tools:text="Your email is incorrect" />
+
+</LinearLayout>

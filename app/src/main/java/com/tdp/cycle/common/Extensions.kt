@@ -31,10 +31,10 @@ fun View.show() {
 }
 
 // This function converts decimal degrees to radians
-fun Double.deg2rad(): Double = this * Math.PI / 180.0
+fun Float.deg2rad(): Float = (this * Math.PI / 180.0f).toFloat()
 
 // This function converts radians to decimal degrees
-fun Double.rad2deg(): Double = this * 180.0 / Math.PI
+fun Float.rad2deg(): Float = (this * 180.0f / Math.PI).toFloat()
 
 //LatLng to Location
 fun LatLng.toLocation() = Location(latitude, longitude)
@@ -115,3 +115,9 @@ fun Dialog.loge(message: String?) {
 fun ViewModel.loge(message: String?) {
     Log.e("${this::class.java.simpleName}TAG", message ?: "")
 }
+
+/** Returns true if 'this' is null */
+fun Any?.isNull() = this == null
+
+/** Returns true if 'this' is not null */
+fun Any?.isNotNull() = this != null

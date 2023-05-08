@@ -3,14 +3,9 @@ package com.tdp.cycle.features.profile.my_vehicles
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tdp.cycle.bases.CycleBaseFragment
-import com.tdp.cycle.common.safeNavigate
 import com.tdp.cycle.databinding.FragmentAddVehicleBinding
-import com.tdp.cycle.models.ElectricVehicleModel
-import com.tdp.cycle.models.cycle_server.ElectricVehicle
 import com.tdp.cycle.models.cycle_server.VehicleMeta
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -32,15 +27,15 @@ class AddVehicleFragment : CycleBaseFragment<FragmentAddVehicleBinding>(Fragment
 
         binding?.apply {
             addVehicleButton.setOnClickListener {
-                myVehiclesViewModel.onAddVehiclesClicked()
+                myVehiclesViewModel.onSaveMetaVehicleClicked()
             }
         }
 
     }
 
     private fun initAdapter() {
-        val onMyVehicleSelected: ((VehicleMeta) -> Unit) = { ev ->
-            myVehiclesViewModel.onAddVehicleSelected(ev)
+        val onMyVehicleSelected: ((VehicleMeta) -> Unit) = { meta ->
+            myVehiclesViewModel.onMetaVehicleSelected(meta)
         }
         addVehiclesAdapter = AddVehiclesAdapter(onMyVehicleSelected, context)
         binding?.apply {
@@ -50,16 +45,14 @@ class AddVehicleFragment : CycleBaseFragment<FragmentAddVehicleBinding>(Fragment
     }
 
     private fun initObservers() {
-        myVehiclesViewModel.addVehicles.observe(viewLifecycleOwner) { evs ->
+        myVehiclesViewModel.metaVehicles.observe(viewLifecycleOwner) { evs ->
             addVehiclesAdapter?.submitList(evs)
         }
 
         myVehiclesViewModel.navigationEvent.observe(viewLifecycleOwner) { event ->
             event?.getContentIfNotHandled()?.let { navigation ->
                 when(navigation) {
-                    MyVehiclesViewModel.NavigationEvent.GO_TO_MY_VEHICLE -> {
-                        activity?.onBackPressed()
-                    }
+                    MyVehiclesViewModel.NavigationEvent.GO_TO_MY_VEHICLE -> popBackStack()
                     else -> { }
                 }
             }

@@ -1,9 +1,8 @@
 package com.tdp.cycle.features.profile.settings
 
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tdp.cycle.common.DriverPreferencesConsts
+import com.tdp.cycle.bases.CycleBaseViewModel
 import com.tdp.cycle.repositories.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +12,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userRepository: UserRepository
-) : ViewModel() {
+) : CycleBaseViewModel() {
 
     val allowPushNotifications = MutableLiveData<Boolean>()
     val allowTollRoads = MutableLiveData<Boolean>()

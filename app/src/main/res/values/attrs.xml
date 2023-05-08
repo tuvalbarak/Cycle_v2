@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <item name="MTtitle" type="string" />
+    <attr name="MTisEnabled" format="boolean" />
+    <attr name="MTbackgroundSelector" format="reference" />
+    <attr name="MTisTextBold" format="boolean"/>
+
+    <declare-styleable name="MTPrimaryButton">
+        <attr name="MTtitle" format="string" />
+        <attr name="MTbackgroundSelector" />
+        <attr name="MTtextColorSelector" format="color" />
+        <attr name="MTstrokeBackground" format="reference" />
+        <attr name="MTstrokeTextColor" format="color" />
+        <attr name="MTisEnabled" />
+        <attr name="MTtextSize" format="integer" />
+        <attr name="MTisSlim" format="boolean" />
+        <attr name="MTstyle" format="reference" />
+        <attr name="MTisTextBold" />
+    </declare-styleable>
+
+    <declare-styleable name="MTPrimaryEditText">
+        <attr name="MTtitle" />
+        <attr name="MTtextSize" />
+        <attr name="MThint" format="string" />
+        <attr name="MTerrorEmpty" format="string" />
+        <attr name="MTerrorInput" format="string" />
+        <attr name="MThasArrow" format="boolean" />
+        <attr name="MTbackgroundSelector" />
+        <attr name="MTisEnabled" />
+        <attr name="MTtextCursorDrawable" format="reference" />
+        <attr name="android:inputType" format="integer" />
+    </declare-styleable>
+
+</resources>
