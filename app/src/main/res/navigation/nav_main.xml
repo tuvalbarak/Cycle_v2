@@ -42,6 +42,16 @@
     </fragment>
 
     <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.tdp.cycle.features.chat.ChatFragment"
+        android:label="chatFragment"
+        tools:layout="@layout/fragment_chat">
+
+    </fragment>
+
+
+
+    <fragment
         android:id="@+id/chargingStationFragment"
         android:name="com.tdp.cycle.features.charging_station.ChargingStationFragment"
         android:label="chargingStationFragment"

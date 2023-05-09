@@ -3,31 +3,30 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:padding="@dimen/common_screen_padding">
 
     <TextView
-        android:id="@+id/myChargingStationsTitle"
+        android:id="@+id/chatTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         style="@style/CycleTitleStyle"
-        android:text="My Charging Station"/>
+        android:text="Chat"/>
 
     <com.tdp.cycle.common.customviews.CustomEmptyState
-        android:id="@+id/myChargingStationEmptyState"
+        android:id="@+id/chatEmptyState"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:FirstButtonTextCustom="Create charging station"
-        app:FirstButtonState="true"
+        app:FirstButtonState="false"
         app:SecondButtonState="false"
-        app:TitleCustom="It seems that you didn't create a charging station yet"
-        app:TextCustom="You can add your private station and share it with others :)"
-        app:BackgroundCustom="@drawable/empty_state_charging_stations" />
+        app:TitleCustom="It seems that you don't have any active chats yet"
+        app:TextCustom="You can chat charging stations' owners"
+        app:BackgroundCustom="@drawable/empty_state_chat"
+        android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

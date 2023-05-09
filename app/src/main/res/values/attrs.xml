@@ -32,4 +32,16 @@
         <attr name="android:inputType" format="integer" />
     </declare-styleable>
 
+    <declare-styleable name="CustomEmptyState">
+        <attr name="TitleCustom" format="string" />
+        <attr name="TextCustom" format="string" />
+        <attr name="TextCustomState" format="boolean"/>
+        <attr name="TitleCustomState" format="boolean"/>
+        <attr name="FirstButtonTextCustom" format="string" />
+        <attr name="SecondButtonTextCustom" format="string" />
+        <attr name="BackgroundCustom" format="reference" />
+        <attr name="SecondButtonState" format="boolean" />
+        <attr name="FirstButtonState" format="boolean" />
+    </declare-styleable>
+
 </resources>

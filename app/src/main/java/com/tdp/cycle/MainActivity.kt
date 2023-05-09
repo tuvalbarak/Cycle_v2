@@ -66,7 +66,8 @@ class MainActivity : CycleBaseActivity<ActivityMainBinding>(ActivityMainBinding:
             navController?.addOnDestinationChangedListener { navController, destination, bundle ->
                 when(destination.id) {
                     R.id.profileFragment,
-                    R.id.routesFragment -> mainActivityBottomNavigationView.show()
+                    R.id.routesFragment,
+                    R.id.chatFragment -> mainActivityBottomNavigationView.show()
                     else -> mainActivityBottomNavigationView.gone()
                 }
             }

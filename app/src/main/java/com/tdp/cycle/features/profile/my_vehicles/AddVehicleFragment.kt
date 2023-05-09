@@ -5,6 +5,8 @@ import android.view.View
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tdp.cycle.bases.CycleBaseFragment
+import com.tdp.cycle.common.gone
+import com.tdp.cycle.common.show
 import com.tdp.cycle.databinding.FragmentAddVehicleBinding
 import com.tdp.cycle.models.cycle_server.VehicleMeta
 import dagger.hilt.android.AndroidEntryPoint
@@ -46,7 +48,16 @@ class AddVehicleFragment : CycleBaseFragment<FragmentAddVehicleBinding>(Fragment
 
     private fun initObservers() {
         myVehiclesViewModel.metaVehicles.observe(viewLifecycleOwner) { evs ->
-            addVehiclesAdapter?.submitList(evs)
+            binding?.apply {
+                if(evs.isNullOrEmpty()) {
+                    addVehicleButton.gone()
+                    addVehiclesEmptyState.show()
+                } else {
+                    addVehicleButton.show()
+                    addVehiclesEmptyState.gone()
+                    addVehiclesAdapter?.submitList(evs)
+                }
+            }
         }
 
         myVehiclesViewModel.navigationEvent.observe(viewLifecycleOwner) { event ->

@@ -5,11 +5,18 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.tdp.cycle.bases.CycleBaseFragment
+import com.tdp.cycle.common.customviews.CustomEmptyState
 import com.tdp.cycle.common.gone
 import com.tdp.cycle.common.safeNavigate
+import com.tdp.cycle.common.show
 import com.tdp.cycle.databinding.FragmentMyChargingStationsBinding
+import dagger.hilt.android.AndroidEntryPoint
 
-class MyChargingStationsFragment : CycleBaseFragment<FragmentMyChargingStationsBinding>(FragmentMyChargingStationsBinding::inflate) {
+@AndroidEntryPoint
+class MyChargingStationsFragment :
+    CycleBaseFragment<FragmentMyChargingStationsBinding>(FragmentMyChargingStationsBinding::inflate),
+    CustomEmptyState.ButtonsClickListener
+{
 
     private val myChargingStationViewModel: MyChargingStationViewModel by viewModels()
 
@@ -20,13 +27,7 @@ class MyChargingStationsFragment : CycleBaseFragment<FragmentMyChargingStationsB
     }
 
     private fun initUi() {
-        binding?.apply {
-            myChargingStationsFab.setOnClickListener {
-                findNavController().safeNavigate(
-                    MyChargingStationsFragmentDirections.actionMyChargingStationFragmentToCreateChargingStationFragment()
-                )
-            }
-        }
+
     }
 
     private fun initObservers() {
@@ -37,10 +38,10 @@ class MyChargingStationsFragment : CycleBaseFragment<FragmentMyChargingStationsB
         myChargingStationViewModel.user.observe(viewLifecycleOwner) { user ->
             binding?.apply {
                 user?.station?.let { chargingStation ->
-                    myChargingStationsFab.gone()
+                    myChargingStationEmptyState.gone()
 
                 } ?: run {
-                    myChargingStationsFab.show()
+                    myChargingStationEmptyState.show()
 
                 }
             }
@@ -49,6 +50,12 @@ class MyChargingStationsFragment : CycleBaseFragment<FragmentMyChargingStationsB
         myChargingStationViewModel.myChargingStation.observe(viewLifecycleOwner) { chargingStation ->
 
         }
+    }
+
+    override fun firstButtonClick() {
+        findNavController().safeNavigate(
+            MyChargingStationsFragmentDirections.actionMyChargingStationFragmentToCreateChargingStationFragment()
+        )
     }
 
 }

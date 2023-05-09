@@ -14,4 +14,19 @@
         style="@style/CycleTitleStyle"
         android:text="Gamification Settings"/>
 
+    <com.tdp.cycle.common.customviews.CustomEmptyState
+        android:id="@+id/gamificationEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:FirstButtonState="false"
+        app:SecondButtonState="false"
+        app:TitleCustom="It seems that you didn't earn any points yet"
+        app:TextCustom="Go a head and rate a station!"
+        app:BackgroundCustom="@drawable/empty_state_gamification"
+        android:visibility="gone" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
