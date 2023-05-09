@@ -17,6 +17,7 @@ data class User(
     val userPreferance: UserPreferance? = null,
     val drivingCharacteristic: DrivingCharacteristic? = null,
     val station: ChargingStation? = null,
+    val gamifications: List<Gamification>? = null
 ) : Parcelable
 
 data class UserRequest(

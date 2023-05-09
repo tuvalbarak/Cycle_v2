@@ -73,7 +73,7 @@ class ProfileFragment: CycleBaseFragment<FragmentProfileBinding>(FragmentProfile
                 profileViewModel.navigateTo(ProfileViewModel.NavigationEvent.GO_TO_MY_CHARGING_STATIONS)
             }
 
-            profileGamificationSettings.setOnClickListener {
+            profileGamificationHistory.setOnClickListener {
                 profileViewModel.navigateTo(ProfileViewModel.NavigationEvent.GO_TO_GAMIFICATION_SETTINGS)
             }
 

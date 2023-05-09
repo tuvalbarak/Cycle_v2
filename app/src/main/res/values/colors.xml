@@ -12,5 +12,7 @@
     <color name="progressbar_background">#80B4B4B4</color>
     <color name="switch_color">#E1E4E9</color>
     <color name="link">#248AD3</color>
+    <color name="positive">#00FF00</color>
+    <color name="negative">#FF0000</color>
 
 </resources>
