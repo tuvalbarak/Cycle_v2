@@ -3,6 +3,7 @@ package com.tdp.cycle.features.charging_station
 import androidx.lifecycle.MutableLiveData
 import com.tdp.cycle.bases.CycleBaseViewModel
 import com.tdp.cycle.models.cycle_server.ChargingStation
+import com.tdp.cycle.models.cycle_server.ChargingStationStatus
 import com.tdp.cycle.models.cycle_server.Comment
 import com.tdp.cycle.models.cycle_server.CommentRequest
 import com.tdp.cycle.remote.networking.LocalResponseError
@@ -71,6 +72,30 @@ class ChargingStationsViewModel @Inject constructor(
                     else -> { }
                 }
             }
+            progressData.endProgress()
+        }
+    }
+
+    fun onChargingStationStatusChanged(status: String) {
+        safeViewModelScopeIO {
+            progressData.startProgress()
+            chargingStation.value?.id?.let {
+                when(val response = chargingStationsRepository.updateStatus(it, status)) {
+                    is RemoteResponseSuccess -> {
+                        chargingStation.postValue(response.data)
+                    }
+                    is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                    else -> { }
+                }
+            }
+            progressData.endProgress()
+        }
+    }
+
+    fun onChargingStationStatusChanged(status: ChargingStationStatus) {
+        safeViewModelScopeIO {
+            progressData.startProgress()
+
             progressData.endProgress()
         }
     }

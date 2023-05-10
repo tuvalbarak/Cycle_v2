@@ -15,8 +15,13 @@ class MapsRepository @Inject constructor(
         key = "AIzaSyAJIBntjoplGTf0G5yqAKUr_5xbiARll4Y"
     )
 
-    suspend fun getGeocode(latLng: String) = mapsService.getGeocode(
+    suspend fun getGeocodeByLatLng(latLng: String) = mapsService.getGeocodeByLatLng(
         latlng = latLng,
+        key = "AIzaSyAJIBntjoplGTf0G5yqAKUr_5xbiARll4Y"
+    )
+
+    suspend fun getGeocodeByAddress(address: String) = mapsService.getGeocodeByAddress(
+        address = address,
         key = "AIzaSyAJIBntjoplGTf0G5yqAKUr_5xbiARll4Y"
     )
 

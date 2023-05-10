@@ -433,7 +433,7 @@ class MapsViewModel @Inject constructor(
         safeViewModelScopeIO {
 //            progressData.startProgress()
             val res = latLng.latitude.toString() + "," + latLng.longitude.toString()
-            val response = mapsRepository.getGeocode(latLng = res,)
+            val response = mapsRepository.getGeocodeByLatLng(latLng = res,)
             if(response.isSuccessful) {
                 geocode.postValue(response.body()?.mapsGeocodeResults)
             }

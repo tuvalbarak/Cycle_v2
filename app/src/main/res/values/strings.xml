@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">Cycle</string>
     <string name="title_activity_maps_activityaaa">MapsActivityaaa</string>
+
+    <string-array name="charging_station_status">
+        <item>Available</item>
+        <item>Broken</item>
+        <item>Occupied</item>
+    </string-array>
+
 </resources>

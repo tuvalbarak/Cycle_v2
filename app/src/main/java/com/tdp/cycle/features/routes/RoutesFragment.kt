@@ -10,6 +10,7 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.LocationServices
@@ -143,14 +144,25 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
                     .setTitle("Couldn't connect to OBD")
                     .setMessage("Enter your current EV's battery percentage...")
                     .setView(inputEditTextField)
-                    .setPositiveButton("Let's start") { _, _ ->
+                    .setCancelable(false)
+                    .setPositiveButton("Let's start") { arg0, arg1 ->
                         val editTextInput = inputEditTextField .text.toString()
-                        Log.d(TAG, "percentage => $editTextInput")
                         mapsViewModel.updateBatteryPercentage(editTextInput.toDoubleOrNull())
                     }
+//                    .setPositiveButton("Let's start") { _, _ ->
+//                        val editTextInput = inputEditTextField .text.toString()
+//                        Log.d(TAG, "percentage => $editTextInput")
+//                        mapsViewModel.updateBatteryPercentage(editTextInput.toDoubleOrNull())
+//                    }
 //                    .setNegativeButton("Cancel", null)
                     .create()
                 dialog.show()
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+                inputEditTextField.doOnTextChanged { text, start, before, count ->
+                    val textAsNumber = text?.toString()?.toIntOrNull() ?: -1
+                    val isValidPercentage = textAsNumber in 0..100
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = isValidPercentage
+                }
             }
         }
     }

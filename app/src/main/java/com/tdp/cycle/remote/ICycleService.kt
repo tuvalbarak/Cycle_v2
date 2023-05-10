@@ -47,6 +47,12 @@ interface ICycleService {
         @Body rating: RatingsRequest
     ) : ServerResponse<ChargingStation>
 
+    @POST("chargingStations/{chargingStationId}/status")
+    suspend fun postStatus(
+        @Path(value = "chargingStationId") stationId: Long?,
+        @Body status: StatusRequest
+    ) : ServerResponse<ChargingStation>
+
     //Electric Vehicles
     @GET("electricVehicles")
     suspend fun getElectricVehicles() : ServerResponse<List<ElectricVehicle>>

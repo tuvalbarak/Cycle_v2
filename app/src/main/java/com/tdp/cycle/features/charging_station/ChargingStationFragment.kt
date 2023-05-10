@@ -2,20 +2,27 @@ package com.tdp.cycle.features.charging_station
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
+import com.tdp.cycle.R
 import com.tdp.cycle.bases.CycleBaseFragment
 import com.tdp.cycle.common.AnimationUtil
 import com.tdp.cycle.common.gone
+import com.tdp.cycle.common.hideKeyboard
 import com.tdp.cycle.common.isNull
+import com.tdp.cycle.common.logd
 import com.tdp.cycle.common.show
 import com.tdp.cycle.databinding.FragmentChargingStationBinding
 import com.tdp.cycle.models.cycle_server.ChargingStation
+import com.tdp.cycle.models.cycle_server.ChargingStationStatus
 import com.tdp.cycle.models.cycle_server.Comment
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.DecimalFormat
@@ -35,6 +42,7 @@ class ChargingStationFragment: CycleBaseFragment<FragmentChargingStationBinding>
     @SuppressLint("ClickableViewAccessibility")
     private fun initUi() {
         initCommentsAdapter()
+        initSpinner()
         handleArguments()
         binding?.apply {
             chargingStationSendMessage.setOnClickListener {
@@ -47,6 +55,8 @@ class ChargingStationFragment: CycleBaseFragment<FragmentChargingStationBinding>
                     AnimationUtil().shakeView(chargingStationLeaveAComment)
                 } else {
                     chargingStationViewModel.postComment(text)
+                    chargingStationLeaveAComment.text.clear()
+                    hideKeyboard()
                 }
             }
 
@@ -54,6 +64,40 @@ class ChargingStationFragment: CycleBaseFragment<FragmentChargingStationBinding>
                 chargingStationViewModel.postRating(chargingStationRatingBar.rating.toInt())
             }
 
+        }
+    }
+
+    private var isSpinnerInitialized = false
+
+    private fun initSpinner() {
+// Create an ArrayAdapter using the string array and a default spinner layout
+        ArrayAdapter.createFromResource(
+            requireContext(),
+            R.array.charging_station_status,
+            android.R.layout.simple_spinner_item
+        ).also { adapter ->
+            // Specify the layout to use when the list of choices appears
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            // Apply the adapter to the spinner
+            binding?.chargingStationStatusSpinner?.adapter = adapter
+            binding?.chargingStationStatusSpinner?.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(p0: AdapterView<*>?, p1: View?, selectedItem: Int, p3: Long) {
+                    if(isSpinnerInitialized) {
+                        val status = when(selectedItem) {
+                            ChargingStationStatus.AVAILABLE.ordinal -> ChargingStationStatus.AVAILABLE.value
+                            ChargingStationStatus.BROKEN.ordinal -> ChargingStationStatus.BROKEN.value
+                            else -> ChargingStationStatus.OCCUPIED.value
+                        }
+                        chargingStationViewModel.onChargingStationStatusChanged(status)
+                    }
+                    isSpinnerInitialized = true
+
+                }
+
+                override fun onNothingSelected(p0: AdapterView<*>?) {
+
+                }
+            }
         }
     }
 
@@ -79,6 +123,20 @@ class ChargingStationFragment: CycleBaseFragment<FragmentChargingStationBinding>
                     chargingStationAddress.text = "${chargingStation.address}, ${chargingStation.city}"
                     chargingStationCondition.text = chargingStation.condition
                     chargingStationChargers.text = "${chargingStation.count.toString()} Chargers"
+                    chargingStation.owner?.let { user ->
+                        chargingStationSendMessage.setText("Message ${user.name}")
+                        chargingStationSendMessage.show()
+                    } ?: run {
+                        chargingStationSendMessage.gone()
+                    }
+
+                    val defaultSelectedPosition = when(chargingStation.condition) {
+                        ChargingStationStatus.AVAILABLE.value -> 0
+                        ChargingStationStatus.BROKEN.value -> 1
+                        else -> 2
+                    }
+                    binding?.chargingStationStatusSpinner?.setSelection(defaultSelectedPosition)
+
                     handleRatings(chargingStation.ratings)
                     handleComments(chargingStation.comments)
                 }
@@ -123,5 +181,4 @@ class ChargingStationFragment: CycleBaseFragment<FragmentChargingStationBinding>
     private fun handleComments(comments: List<Comment?>?) {
         (binding?.chargingStationCommentsRV?.adapter as? CommentsAdapter)?.submitList(comments)
     }
-
 }

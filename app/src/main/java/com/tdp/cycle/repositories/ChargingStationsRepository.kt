@@ -3,6 +3,7 @@ package com.tdp.cycle.repositories
 import com.tdp.cycle.models.cycle_server.ChargingStationRequest
 import com.tdp.cycle.models.cycle_server.CommentRequest
 import com.tdp.cycle.models.cycle_server.RatingsRequest
+import com.tdp.cycle.models.cycle_server.StatusRequest
 import com.tdp.cycle.remote.ICycleService
 import com.tdp.cycle.remote.networking.RemoteResponseHandler
 
@@ -17,6 +18,10 @@ class ChargingStationsRepository(
 
     suspend fun postRating(stationId: Long, rating: Int) = remoteResponseHandler.safeApiCall {
         cycleService.postRating(stationId, RatingsRequest(rating))
+    }
+
+    suspend fun updateStatus(stationId: Long, status: String) = remoteResponseHandler.safeApiCall {
+        cycleService.postStatus(stationId, StatusRequest(status))
     }
 
     suspend fun createChargingStation(chargingStationRequest: ChargingStationRequest) =

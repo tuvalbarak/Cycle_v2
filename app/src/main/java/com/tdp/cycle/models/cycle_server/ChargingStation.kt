@@ -28,7 +28,6 @@ data class ChargingStationRequest(
     val name: String,
     val lat: Float,
     val lng: Float,
-    val provider: String,
     val priceDetails: String,
     val address: String,
     val city: String,

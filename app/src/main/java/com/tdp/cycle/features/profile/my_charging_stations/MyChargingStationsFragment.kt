@@ -2,6 +2,7 @@ package com.tdp.cycle.features.profile.my_charging_stations
 
 import android.os.Bundle
 import android.view.View
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.tdp.cycle.bases.CycleBaseFragment
@@ -18,7 +19,7 @@ class MyChargingStationsFragment :
     CustomEmptyState.ButtonsClickListener
 {
 
-    private val myChargingStationViewModel: MyChargingStationViewModel by viewModels()
+    private val myChargingStationViewModel: MyChargingStationViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -27,7 +28,9 @@ class MyChargingStationsFragment :
     }
 
     private fun initUi() {
-
+        binding?.apply {
+            myChargingStationEmptyState.setButtonsListener(this@MyChargingStationsFragment)
+        }
     }
 
     private fun initObservers() {

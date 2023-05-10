@@ -12,6 +12,7 @@ import com.tdp.cycle.remote.networking.RemoteResponseError
 import com.tdp.cycle.remote.networking.RemoteResponseSuccess
 import com.tdp.cycle.remote.networking.getErrorMsgByType
 import com.tdp.cycle.repositories.ChargingStationsRepository
+import com.tdp.cycle.repositories.MapsRepository
 import com.tdp.cycle.repositories.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,7 +20,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MyChargingStationViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val chargingStationRepository: ChargingStationsRepository
+    private val chargingStationRepository: ChargingStationsRepository,
+    private val mapsRepository: MapsRepository
 ) : CycleBaseViewModel() {
 
     val myChargingStation = MutableLiveData<ChargingStation?>()
@@ -50,13 +52,25 @@ class MyChargingStationViewModel @Inject constructor(
     fun createChargingStation(chargingStationRequest: ChargingStationRequest) {
         safeViewModelScopeIO {
             progressData.startProgress()
-            when(val response = chargingStationRepository.createChargingStation(chargingStationRequest)) {
-                is RemoteResponseSuccess -> {
-                    myChargingStation.postValue(response.data)
-                    navigationEvent.postRawValue(NavigationEvent.GO_TO_MY_CHARGING_STATION)
+            val addressResponse = mapsRepository.getGeocodeByAddress(chargingStationRequest.address + chargingStationRequest.city)
+            if(addressResponse.isSuccessful) {
+                val ownerId = user.value?.id ?: 0
+                val location = addressResponse.body()?.mapsGeocodeResults?.firstOrNull()?.geometry?.location
+                val lat = location?.lat?.toFloat() ?: 0f
+                val lng = location?.lng?.toFloat() ?: 0f
+                val request = chargingStationRequest.copy(
+                    ownerId = ownerId,
+                    lat = lat,
+                    lng = lng
+                )
+                when(val response = chargingStationRepository.createChargingStation(request)) {
+                    is RemoteResponseSuccess -> {
+                        myChargingStation.postValue(response.data)
+                        navigationEvent.postRawValue(NavigationEvent.GO_TO_MY_CHARGING_STATION)
+                    }
+                    is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                    else -> { }
                 }
-                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
-                else -> { }
             }
             progressData.endProgress()
         }

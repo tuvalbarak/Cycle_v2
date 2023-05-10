@@ -180,6 +180,16 @@
                 app:MTisTextBold="true"
                 app:MTtextSize="13" />
 
+            <Spinner
+                android:id="@+id/chargingStationStatusSpinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chargingStationLeaveARating"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="@dimen/common_extra_extra_large_margin"
+                />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.core.widget.NestedScrollView>
