@@ -53,6 +53,12 @@ interface ICycleService {
         @Body status: StatusRequest
     ) : ServerResponse<ChargingStation>
 
+    @PATCH("chargingStations/{chargingStationId}")
+    suspend fun updateChargingStation(
+        @Path(value = "chargingStationId") stationId: Long?,
+        @Body status: ChargingStationRequest
+    ) : ServerResponse<ChargingStation>
+
     //Electric Vehicles
     @GET("electricVehicles")
     suspend fun getElectricVehicles() : ServerResponse<List<ElectricVehicle>>

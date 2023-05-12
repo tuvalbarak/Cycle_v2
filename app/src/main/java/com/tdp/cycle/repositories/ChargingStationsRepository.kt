@@ -29,6 +29,11 @@ class ChargingStationsRepository(
             cycleService.createChargingStation(chargingStationRequest)
         }
 
+    suspend fun updateChargingStation(chargingStationRequest: ChargingStationRequest) =
+        remoteResponseHandler.safeApiCall {
+            cycleService.updateChargingStation(chargingStationRequest.ownerId, chargingStationRequest)
+        }
+
     suspend fun getChargingStations() = remoteResponseHandler.safeApiCall {
         cycleService.getChargingStations()
     }

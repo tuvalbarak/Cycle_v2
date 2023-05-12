@@ -27,6 +27,7 @@ class MyChargingStationViewModel @Inject constructor(
     val myChargingStation = MutableLiveData<ChargingStation?>()
     val navigationEvent = SingleLiveEvent<NavigationEvent>()
     val user = MutableLiveData<User?>()
+    val chargingStationUpdated = MutableLiveData<Boolean>()
 
     enum class NavigationEvent {
         GO_TO_MY_CHARGING_STATION,
@@ -67,6 +68,33 @@ class MyChargingStationViewModel @Inject constructor(
                     is RemoteResponseSuccess -> {
                         myChargingStation.postValue(response.data)
                         navigationEvent.postRawValue(NavigationEvent.GO_TO_MY_CHARGING_STATION)
+                    }
+                    is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                    else -> { }
+                }
+            }
+            progressData.endProgress()
+        }
+    }
+
+    fun updateChargingStation(chargingStationRequest: ChargingStationRequest) {
+        safeViewModelScopeIO {
+            progressData.startProgress()
+            val addressResponse = mapsRepository.getGeocodeByAddress(chargingStationRequest.address + chargingStationRequest.city)
+            if(addressResponse.isSuccessful) {
+                val ownerId = user.value?.id ?: 0
+                val location = addressResponse.body()?.mapsGeocodeResults?.firstOrNull()?.geometry?.location
+                val lat = location?.lat?.toFloat() ?: 0f
+                val lng = location?.lng?.toFloat() ?: 0f
+                val request = chargingStationRequest.copy(
+                    ownerId = ownerId,
+                    lat = lat,
+                    lng = lng
+                )
+                when(val response = chargingStationRepository.updateChargingStation(request)) {
+                    is RemoteResponseSuccess -> {
+                        myChargingStation.postValue(response.data)
+                        chargingStationUpdated.postValue(true)
                     }
                     is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
                     else -> { }
