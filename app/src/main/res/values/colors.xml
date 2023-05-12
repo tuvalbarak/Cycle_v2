@@ -14,5 +14,9 @@
     <color name="link">#248AD3</color>
     <color name="positive">#00FF00</color>
     <color name="negative">#FF0000</color>
+    <color name="pale_sky_blue">#bfe4f8</color>
+    <color name="duck_egg_blue">#d3efe5</color>
+    <color name="decorative_color">#fafafb</color>
+    <color name="paleGrey">#f1f9fd</color>
 
 </resources>

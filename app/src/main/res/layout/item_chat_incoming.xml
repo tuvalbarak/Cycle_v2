@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:id="@+id/itemChatIncomingRoot">
+
+    <TextView
+        android:id="@+id/chatItemTimeAgo"
+        android:textSize="11sp"
+        android:textColor="@color/white"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/chat_date_bubble"
+        android:layout_gravity="center"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:layout_marginVertical="10dp"
+        tools:text="Today"
+        android:alpha="0.9"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/chatItemMessageLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="23dp"
+        android:paddingTop="5dp"
+        android:paddingEnd="70dp"
+        android:paddingBottom="5dp">
+
+        <ImageView
+            android:id="@+id/chatItemPic"
+            android:layout_width="31dp"
+            android:layout_height="31dp"
+            android:layout_gravity="start|bottom"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/ic_place_holder_oval" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/chatItemMessageBackground"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="15dp"
+                android:paddingVertical="8dp"
+                android:background="@drawable/chat_incoming_bubble">
+
+                <TextView
+                    android:id="@+id/chatItemMessage"
+                    android:autoLink="web"
+                    android:textSize="13sp"
+                    android:textColor="@color/blackTextColor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:lineSpacingExtra="7sp"
+                    android:paddingBottom="1dp"
+                    tools:text="test message test message test message test message test message test message test message test message test message test message test message  test message test message test message test message " />
+
+            </LinearLayout>
+
+
+            <TextView
+                android:id="@+id/chatItemTime"
+                android:textSize="11sp"
+                android:textColor="@color/light_grey"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_marginTop="5dp"
+                android:alpha="0.4"
+                tools:text="9:41" />
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+</LinearLayout>
