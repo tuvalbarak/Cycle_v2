@@ -57,7 +57,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
     override fun onResume() {
         super.onResume()
-        mapsViewModel.getMyEv()
+        mapsViewModel.getUserMe()
     }
 
     private fun initUi() {
@@ -94,8 +94,8 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         mapsViewModel.myEvEvent.observe(viewLifecycleOwner) { myEv ->
 
             binding?.apply {
-                routesVehicleBrand.text = "Brand: " + myEv?.brand
-                routesVehicleModel.text = "Model: " + myEv?.model
+                routesVehicleBrand.text = "Brand: " + myEv?.vehicleMeta?.brand
+                routesVehicleModel.text = "Model: " + myEv?.vehicleMeta?.model
                 val image = R.drawable.ic_tesla_y
 //                    if(ev?.id == 1L) R.drawable.ic_tesla_y
 //                    else R.drawable.ic_mg_marvel
@@ -118,6 +118,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
 
         mapsViewModel.user.observe(viewLifecycleOwner) { user ->
+            mapsViewModel.getMyEv()
             binding?.routesUserName?.text = user?.let {
                 "Hey, ${user.name?.split(" ")?.firstOrNull()}"
             } ?: ""

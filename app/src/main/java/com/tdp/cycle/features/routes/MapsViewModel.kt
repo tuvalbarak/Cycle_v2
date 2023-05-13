@@ -9,11 +9,13 @@ import com.tdp.cycle.common.deg2rad
 import com.tdp.cycle.common.rad2deg
 import com.tdp.cycle.models.cycle_server.Battery
 import com.tdp.cycle.models.cycle_server.ChargingStation
+import com.tdp.cycle.models.cycle_server.ElectricVehicle
 import com.tdp.cycle.models.cycle_server.User
 import com.tdp.cycle.models.cycle_server.VehicleMeta
 import com.tdp.cycle.models.responses.*
 import com.tdp.cycle.remote.networking.RemoteResponseError
 import com.tdp.cycle.remote.networking.RemoteResponseSuccess
+import com.tdp.cycle.remote.networking.ResponseSuccess
 import com.tdp.cycle.remote.networking.getErrorMsgByType
 import com.tdp.cycle.repositories.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +36,8 @@ class MapsViewModel @Inject constructor(
     private val mapsRepository: MapsRepository,
     private val weatherRepository: WeatherRepository,
     private val userRepository: UserRepository,
-    private val chargingStationsRepository: ChargingStationsRepository
+    private val chargingStationsRepository: ChargingStationsRepository,
+    private val vehiclesRepository: VehiclesRepository
 ) : CycleBaseViewModel() {
 
     val user = MutableLiveData<User?>()
@@ -46,7 +49,7 @@ class MapsViewModel @Inject constructor(
     val chargingStations = MutableLiveData<List<ChargingStation?>?>()
     val bestStation = MutableLiveData<ChargingStation?>()
 //    val electricVehiclesEvent = MutableLiveData<List<ElectricVehicleModel>>()
-    val myEvEvent = MutableLiveData<VehicleMeta>()
+    val myEvEvent = MutableLiveData<ElectricVehicle?>()
     val currentUserLocation = MutableLiveData(false)
     val weather = MutableLiveData<WeatherResponse>()
     val isObdAvailable = MutableLiveData<Boolean>()
@@ -64,11 +67,6 @@ class MapsViewModel @Inject constructor(
             }
 //            chargingStationsRepositoryDepricated.fetchChargingStationsLocations()
             updateCurrentLocation()
-            when(val response = userRepository.getUserMe()) {
-                is RemoteResponseSuccess -> user.postValue(response.data)
-                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
-                else -> { }
-            }
 
             //Currently no obd integration -> always false.
             isObdAvailable.postValue(false)
@@ -76,6 +74,21 @@ class MapsViewModel @Inject constructor(
             progressData.endProgress()
         }
     }
+
+    fun getUserMe() {
+        safeViewModelScopeIO {
+            progressData.startProgress()
+            when(val response = userRepository.getUserMe(fetchFromServer = true)) {
+                is RemoteResponseSuccess -> {
+                    user.postValue(response.data)
+                }
+                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                else -> { }
+            }
+            progressData.endProgress()
+        }
+    }
+
 
     fun calculateRadiansBetweenTwoPoints(start: Location?, end: Location?): Double {
         val lat1 = Math.toRadians(start?.lat ?: 0.0)
@@ -97,9 +110,16 @@ class MapsViewModel @Inject constructor(
     }
 
     fun getMyEv() {
-//        safeViewModelScopeIO {
+
+        safeViewModelScopeIO {
+            progressData.startProgress()
+            user.value?.myElectricVehicle?.let {
+                val myEv = (vehiclesRepository.getElectricVehiclesById(it) as? RemoteResponseSuccess)?.data
+                myEvEvent.postValue(myEv)
+            }
+            progressData.endProgress()
 //            myEvEvent.postValue(userRepositoryDepricated.getLastSelectedEV())
-//        }
+        }
     }
 
     fun updateBatteryPercentage(percentage: Double?) {
@@ -190,35 +210,33 @@ class MapsViewModel @Inject constructor(
                 val originLatLng = directionsResponse.body()?.routes?.firstOrNull()?.legs?.firstOrNull()?.startLocation
                 val destinationLatLng = directionsResponse.body()?.routes?.firstOrNull()?.legs?.lastOrNull()?.endLocation
 
-//                val result = calculateDrivingRadians(originLatLng, destinationLatLng)
-//                Log.d(TAG, "degrees => $result")
-
                 calculateElevationDifference(originLatLng, destinationLatLng)
 
                 val recommendedRoute = getBestRouteAccordingToGoogle(directionsResponse.body()?.routes)
-//                val bestStation = recommendedRoute?.let {
-//                    val currentEv = userRepositoryDepricated.getLastSelectedEV()
-//                    val currentBattery = cycleRepository.getBatteryById(currentEv?.id)
-//                    getBestStation(recommendedRoute, currentBattery)
-//                }
+                val bestStation = recommendedRoute?.let {
+                    user.value?.myElectricVehicle?.let {
+                        val currentEv = (vehiclesRepository.getElectricVehiclesById(it) as? RemoteResponseSuccess)?.data
+                        getBestStation(recommendedRoute, currentEv?.battery)
+                    }
+                }
 
-                bestStation?.let {
+                bestStation?.let { station ->
                     //Need to stop
-//                    val waypoints = bestStation.getLocation().toLatLngFormat()
-//                    val modifiedDirectionsResponse = mapsRepository.getDirections(
-//                        origin = origin,
-//                        destination = destination,
-//                        waypoints = "via:${waypoints}"
-//                    )
+                    val waypoints = station.getLocation().toLatLngFormat()
+                    val modifiedDirectionsResponse = mapsRepository.getDirections(
+                        origin = origin,
+                        destination = destination,
+                        waypoints = "via:${waypoints}"
+                    )
 
-//                    if (modifiedDirectionsResponse.isSuccessful) {
-//                        getBestRouteAccordingToGoogle(modifiedDirectionsResponse.body()?.routes)?.let { route ->
-//                            bestRoute.postValue(route)
-//                        }
-//                    }
+                    if (modifiedDirectionsResponse.isSuccessful) {
+                        getBestRouteAccordingToGoogle(modifiedDirectionsResponse.body()?.routes)?.let { route ->
+                            bestRoute.postValue(route)
+                        }
+                    }
 
                 } ?: run {
-                    //Don't need to stop
+//                    Don't need to stop
                     recommendedRoute?.let {
                         bestRoute.postValue(it)
                     }

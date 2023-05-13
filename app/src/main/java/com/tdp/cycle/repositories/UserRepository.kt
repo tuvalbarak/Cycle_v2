@@ -26,10 +26,16 @@ class UserRepository(
     private var currentUserResponse: ResponseResult<User>? = null
 
     suspend fun updateUser(userRequest: UserRequest) = currentUser?.id?.let { userId ->
-        remoteResponseHandler.safeApiCall {
+        val response = remoteResponseHandler.safeApiCall {
             cycleService.updateUser(userId, userRequest)
-            }
         }
+        if(response is RemoteResponseSuccess) {
+            currentUser = response.data?.copy()
+            currentUserResponse = response
+            (currentUserResponse as? RemoteResponseSuccess)?.data = currentUser
+        }
+        response
+    }
 
     suspend fun getUserMe(fetchFromServer: Boolean = false): ResponseResult<User>? {
         if (currentUser.isNull() || fetchFromServer) {

@@ -121,6 +121,7 @@ class MyVehiclesViewModel @Inject constructor(
             )
             when(val response = vehiclesRepository.createElectricVehicle(electricVehicleRequest)) {
                 is RemoteResponseSuccess -> {
+//                    userRepository.updateUser(UserRequest(my_electric_vehicle = response.data?.id))
                     getMyEvs()
                     getMetaVehicles()
                     navigationEvent.postRawValue(NavigationEvent.GO_TO_MY_VEHICLE)

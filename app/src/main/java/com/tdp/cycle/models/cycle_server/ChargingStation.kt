@@ -1,6 +1,7 @@
 package com.tdp.cycle.models.cycle_server
 
 import android.os.Parcelable
+import com.tdp.cycle.models.responses.Location
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -22,7 +23,11 @@ data class ChargingStation(
     val comments: List<Comment?>? = null,
     val owner: User? = null,
     var distanceFromRoute: Double? = null,
-) : Parcelable
+) : Parcelable {
+
+    fun getLocation() = Location(lat?.toDouble(), lng?.toDouble())
+
+}
 
 data class ChargingStationRequest(
     val name: String,
