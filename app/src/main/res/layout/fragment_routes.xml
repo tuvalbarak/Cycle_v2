@@ -138,6 +138,15 @@
                 app:layout_constraintTop_toBottomOf="@id/routesElevation"
                 app:layout_constraintStart_toStartOf="parent"
                 android:layout_marginTop="4dp" />
+            <TextView
+                android:id="@+id/rpm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Rpm: N/A"
+                android:textColor="@color/primary_blue"
+                app:layout_constraintTop_toBottomOf="@id/routesETA"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="4dp" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

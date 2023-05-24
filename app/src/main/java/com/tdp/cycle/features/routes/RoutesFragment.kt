@@ -1,18 +1,28 @@
 package com.tdp.cycle.features.routes
 
+import android.Manifest
+import android.bluetooth.BluetoothSocket
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.EditText
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import br.ufrn.imd.obd.commands.ObdCommandGroup
+import br.ufrn.imd.obd.commands.engine.RPMCommand
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -25,6 +35,7 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.maps.android.PolyUtil
+import com.tdp.cycle.MainActivity
 import com.tdp.cycle.R
 import com.tdp.cycle.bases.CycleBaseFragment
 import com.tdp.cycle.common.safeNavigate
@@ -33,6 +44,10 @@ import com.tdp.cycle.databinding.FragmentRoutesBinding
 import com.tdp.cycle.models.cycle_server.ChargingStation
 import com.tdp.cycle.models.responses.Route
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 
 @AndroidEntryPoint
@@ -45,15 +60,101 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStation?>>()
     private var myMarker: Marker? = null
 
+
+//    private var mainActivity: MainActivity? by lazy { (activity as? MainActivity) }
+
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+//        if(savedInstanceState == null) {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        (childFragmentManager.findFragmentById(R.id.routesMap) as? SupportMapFragment)?.getMapAsync(this)
+
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+            && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+            (childFragmentManager.findFragmentById(R.id.routesMap) as? SupportMapFragment)?.getMapAsync(this)
+            initObservers()
+
+        } else {
+//            val builder = AlertDialog.Builder(requireContext())
+//            builder.setTitle("Location approval needed")
+//            builder.setCancelable(false)
+//            builder.setPositiveButton("Approve Location") { dialog, _ ->
+//                (activity as? MainActivity)?.handlePermissions()
+//                dialog.dismiss()
+//            }
+//            builder.show()
+        }
 
         initUi()
-        initObservers()
+
     }
+
+    private fun startObdCommunication() {
+        (activity as? MainActivity)?.apply {
+            obdSocket?.let { socket ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    if (socket.isConnected) {
+                        obdCommunicationFragment(socket)
+                    } else {
+                        connectObdSocket(socket)
+                        obdCommunicationFragment(socket)
+                    }
+                }
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    suspend fun obdCommunicationFragment(bluetoothSocket: BluetoothSocket?) {
+        withContext(Dispatchers.IO) {
+            bluetoothSocket?.let {
+                try {
+                    val inputStream = it.inputStream
+                    val outputStream = it.outputStream
+                    val buffer = ByteArray(1024)
+                    // Group many obd commands into a single command ()
+                    val obdCommands = ObdCommandGroup()
+                    obdCommands.add(RPMCommand())
+
+                    // Run all commands at once
+                    var obdFetching = true
+                    while(obdFetching) {
+                        val response = obdCommands.run(inputStream, outputStream)
+                        val response2 = obdCommands.commandPID
+                        val response3 = obdCommands.result
+                        val response4 = obdCommands.name
+
+                        mapsViewModel.rpmValue.postValue(response3.toString())
+
+
+
+                        // Receive the response into buffer from the OBD-II device.
+//                    val responseLength = inputStream.read(buffer)
+//
+//                    // Parse the response to extract the RPM value.
+//                    val responseString = String(buffer, 0, responseLength)
+
+                        Log.d("ressssssssponse", response.toString())
+                        Log.d("ressssssssponse", response2.toString())
+                        Log.d("ressssssssponse", response3.toString())
+                        Log.d("ressssssssponse", response4.toString())
+//                    Log.d("ressssssssponse", responseString)
+
+                        delay(10)
+                    }
+
+
+                } catch (e: Exception) {
+                    Log.e(RoutesFragment.TAG, "Could not connect to obd", e)
+                    null
+                }
+
+            }
+        }
+    }
+
 
     override fun onResume() {
         super.onResume()
@@ -62,12 +163,15 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
     private fun initUi() {
         binding?.apply {
+
             routesSearchButton.setOnClickListener {
 
                 mapsViewModel.getDirections(
                     origin = currentLocationString ?: "Ana Frank 14, Ramat-Gan",
                     destination = routesSearchEditText.text.toString()
                 )
+
+                startObdCommunication()
             }
         }
     }
@@ -127,6 +231,13 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         mapsViewModel.batteryPercentage.observe(viewLifecycleOwner) { batteryPercentage ->
             batteryPercentage?.let {
                 binding?.routesBatteryLevel?.text = "Battery: $it%"
+            }
+
+        }
+
+        mapsViewModel.rpmValue.observe(viewLifecycleOwner) { rpm ->
+            rpm?.let {
+                binding?.rpm?.text = "Rpm: $it%"
             }
 
         }
@@ -323,6 +434,6 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     }
 
     companion object {
-        private const val TAG = "RoutesFragmentTAG"
+        const val TAG = "RoutesFragmentTAG"
     }
 }

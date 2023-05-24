@@ -56,6 +56,9 @@ class MapsViewModel @Inject constructor(
     private var isInRoute = false
     private var originLocation: LatLng? = null
 
+    val rpmValue: MutableLiveData<String> = MutableLiveData("N/A")
+
+
     init {
 
         safeViewModelScopeIO {
