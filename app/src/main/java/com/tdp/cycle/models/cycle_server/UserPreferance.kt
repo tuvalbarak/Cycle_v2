@@ -9,5 +9,6 @@ data class UserPreferance (
     val areNotificationAllowed: Boolean? = null,
     val areTollRoadsAllowed: Boolean? = null,
     val areMultipleChargingStopsAllowed: Boolean? = null,
+    val arePrivateChargingStationsAllowed: Boolean? = null,
     val roadLandscape: String? = null,
 ) : Parcelable

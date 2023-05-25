@@ -304,43 +304,47 @@ class MapsViewModel @Inject constructor(
             leg?.steps?.forEach { step ->
                 // Now crossing between all possible steps (from all possible routes & legs) and our charging stations
                 chargingStations.value?.forEach { chargingStation ->
-                    // Making sure nothing is null
-                    chargingStation?.lat?.let { chargingStationLat ->
-                        chargingStation.lng?.let { chargingStationLng ->
-                            step?.endLocation?.lat?.let { stepLat ->
-                                step.endLocation?.lng?.let { stepLng ->
-                                    originLocation?.let { origin ->
+                    val arePrivateStationsAllowed = user.value?.userPreferance?.arePrivateChargingStationsAllowed ?: false
+                    if(chargingStation?.isPrivate == true || !arePrivateStationsAllowed) {
 
-                                        // Getting current distance from stop to charging station
-                                        val currentDistanceBetweenStepAndStation =
-                                            calculateDistance(
-                                                chargingStationLat,
-                                                chargingStationLng,
-                                                stepLat.toFloat(),
-                                                stepLng.toFloat()
+                        // Making sure nothing is null
+                        chargingStation?.lat?.let { chargingStationLat ->
+                            chargingStation.lng?.let { chargingStationLng ->
+                                step?.endLocation?.lat?.let { stepLat ->
+                                    step.endLocation?.lng?.let { stepLng ->
+                                        originLocation?.let { origin ->
+
+                                            // Getting current distance from stop to charging station
+                                            val currentDistanceBetweenStepAndStation =
+                                                calculateDistance(
+                                                    chargingStationLat,
+                                                    chargingStationLng,
+                                                    stepLat.toFloat(),
+                                                    stepLng.toFloat()
+                                                )
+                                            val distanceFromOrigin =
+                                                calculateDistance(
+                                                    chargingStationLat,
+                                                    chargingStationLng,
+                                                    origin.latitude.toFloat(),
+                                                    origin.longitude.toFloat()
+                                                )
+
+                                            distances.add(
+                                                RouteStationDistance(
+                                                    currentDistanceBetweenStepAndStation.toDouble(),
+                                                    distanceFromOrigin.toDouble(),
+                                                    chargingStation
+                                                )
+
                                             )
-                                        val distanceFromOrigin =
-                                            calculateDistance(
-                                                chargingStationLat,
-                                                chargingStationLng,
-                                                origin.latitude.toFloat(),
-                                                origin.longitude.toFloat()
-                                            )
 
-                                        distances.add(
-                                            RouteStationDistance(
-                                                currentDistanceBetweenStepAndStation.toDouble(),
-                                                distanceFromOrigin.toDouble(),
-                                                chargingStation
-                                            )
-
-                                        )
-
-                                        // If we found better station
-                                        if (currentDistanceBetweenStepAndStation < minDistanceBetweenStepAndStation) {
-                                            // Saving new params
-                                            minDistanceBetweenStepAndStation = currentDistanceBetweenStepAndStation.toDouble()
-                                            currentBestStation = chargingStation
+                                            // If we found better station
+                                            if (currentDistanceBetweenStepAndStation < minDistanceBetweenStepAndStation) {
+                                                // Saving new params
+                                                minDistanceBetweenStepAndStation = currentDistanceBetweenStepAndStation.toDouble()
+                                                currentBestStation = chargingStation
+                                            }
                                         }
                                     }
                                 }

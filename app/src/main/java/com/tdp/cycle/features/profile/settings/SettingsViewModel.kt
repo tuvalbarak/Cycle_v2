@@ -17,11 +17,13 @@ class SettingsViewModel @Inject constructor(
     val allowPushNotifications = MutableLiveData<Boolean>()
     val allowTollRoads = MutableLiveData<Boolean>()
     val allowMultipleChargingStops = MutableLiveData<Boolean>()
+    val allowPrivateStations = MutableLiveData<Boolean>()
 
     init {
         getArePushNotificationsAllowed()
         getAreMultipleChargingStationsAllowed()
         getAreTollRoadsAllowed()
+        getArePrivateStationsAllowed()
     }
 
     fun updatePushNotificationsInSP(pushNotifications: Boolean) {
@@ -39,21 +41,32 @@ class SettingsViewModel @Inject constructor(
         getAreTollRoadsAllowed()
     }
 
+    fun updateIsPrivateStationsAllowedInSp(isPrivateStationsAllowed: Boolean) {
+        userRepository.updateIsPrivateStationsAllowedInSp(isPrivateStationsAllowed)
+        getArePrivateStationsAllowed()
+    }
+
     private fun getArePushNotificationsAllowed() {
-        viewModelScope.launch(Dispatchers.IO) {
+        safeViewModelScopeIO {
             allowPushNotifications.postValue(userRepository.getArePushNotificationsAllowed())
         }
     }
 
     private fun getAreMultipleChargingStationsAllowed() {
-        viewModelScope.launch(Dispatchers.IO) {
+        safeViewModelScopeIO {
             allowMultipleChargingStops.postValue(userRepository.getAreMultipleChargingStationsAllowed())
         }
     }
 
     private fun getAreTollRoadsAllowed() {
-        viewModelScope.launch(Dispatchers.IO) {
+        safeViewModelScopeIO {
             allowTollRoads.postValue(userRepository.getAreTollRoadsAllowed())
+        }
+    }
+
+    private fun getArePrivateStationsAllowed() {
+        safeViewModelScopeIO {
+            allowPrivateStations.postValue(userRepository.getArePrivateStationsAllowed())
         }
     }
 

@@ -74,6 +74,10 @@ class UserRepository(
         sharedPreferences.edit().putBoolean(DriverPreferencesConsts.allowTollRoads, allowTollRoads).apply()
     }
 
+    fun updateIsPrivateStationsAllowedInSp(isPrivateStationsAllowed: Boolean) {
+        sharedPreferences.edit().putBoolean(DriverPreferencesConsts.isPrivateStations, isPrivateStationsAllowed).apply()
+    }
+
     suspend fun getArePushNotificationsAllowed() = withContext(Dispatchers.IO) {
         sharedPreferences.getBoolean(DriverPreferencesConsts.pushNotifications, false)
     }
@@ -84,6 +88,10 @@ class UserRepository(
 
     suspend fun getAreTollRoadsAllowed() = withContext(Dispatchers.IO) {
         sharedPreferences.getBoolean(DriverPreferencesConsts.allowTollRoads, false)
+    }
+
+    suspend fun getArePrivateStationsAllowed() = withContext(Dispatchers.IO) {
+        sharedPreferences.getBoolean(DriverPreferencesConsts.isPrivateStations, false)
     }
 
 }

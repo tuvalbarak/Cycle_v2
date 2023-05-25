@@ -33,6 +33,11 @@ class SettingsFragment : CycleBaseFragment<FragmentSettingsBinding>(FragmentSett
             settingsNotificationsSwitch.setOnCheckedChangeListener { _, isChecked ->
                 settingsViewModel.updatePushNotificationsInSP(isChecked)
             }
+
+            settingsPrivateStationsSwitch.setOnCheckedChangeListener { _, isChecked ->
+                settingsViewModel.updateIsPrivateStationsAllowedInSp(isChecked)
+            }
+
         }
     }
 
@@ -49,6 +54,10 @@ class SettingsFragment : CycleBaseFragment<FragmentSettingsBinding>(FragmentSett
 
             settingsViewModel.allowMultipleChargingStops.observe(viewLifecycleOwner) { isChecked ->
                 settingsMultipleChargingSwitch.isChecked = isChecked
+            }
+
+            settingsViewModel.allowPrivateStations.observe(viewLifecycleOwner) { isChecked ->
+                settingsPrivateStationsSwitch.isChecked = isChecked
             }
 
             settingsViewModel.progressData.observe(viewLifecycleOwner) { isLoading ->
