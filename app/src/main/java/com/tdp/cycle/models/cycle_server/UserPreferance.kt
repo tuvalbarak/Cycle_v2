@@ -6,9 +6,9 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class UserPreferance (
     val id: Long? = null,
-    val areNotificationAllowed: Boolean? = null,
-    val areTollRoadsAllowed: Boolean? = null,
-    val areMultipleChargingStopsAllowed: Boolean? = null,
-    val arePrivateChargingStationsAllowed: Boolean? = null,
+    var areNotificationAllowed: Boolean? = null,
+    var areTollRoadsAllowed: Boolean? = null,
+    var areMultipleChargingStopsAllowed: Boolean? = null,
+    var arePrivateChargingStationsAllowed: Boolean? = null,
     val roadLandscape: String? = null,
 ) : Parcelable

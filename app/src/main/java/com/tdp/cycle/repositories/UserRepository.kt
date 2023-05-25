@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import com.tdp.cycle.common.DriverPreferencesConsts
 import com.tdp.cycle.common.isNull
 import com.tdp.cycle.models.cycle_server.User
+import com.tdp.cycle.models.cycle_server.UserPreferance
 import com.tdp.cycle.models.cycle_server.UserRequest
 import com.tdp.cycle.remote.ICycleService
 import com.tdp.cycle.remote.networking.LocalResponseError
@@ -49,7 +50,15 @@ class UserRepository(
             cycleService.getUserMe()
         }.also { response ->
             if(response is RemoteResponseSuccess) {
-                currentUser = response.data?.copy()
+                currentUser = response.data?.copy(
+                    userPreferance = UserPreferance(
+                        areNotificationAllowed = getArePushNotificationsAllowed(),
+                        areTollRoadsAllowed = getAreTollRoadsAllowed(),
+                        areMultipleChargingStopsAllowed = getAreMultipleChargingStationsAllowed(),
+                        arePrivateChargingStationsAllowed = getArePrivateStationsAllowed(),
+
+                    )
+                )
                 currentUserResponse = response
                 (currentUserResponse as? RemoteResponseSuccess)?.data = currentUser
             }
@@ -64,18 +73,22 @@ class UserRepository(
 
     fun updatePushNotificationsInSP(pushNotifications: Boolean) {
         sharedPreferences.edit().putBoolean(DriverPreferencesConsts.pushNotifications, pushNotifications).apply()
+        currentUser?.userPreferance?.areNotificationAllowed = pushNotifications
     }
 
     fun updateMultipleChargingStopsInSP(multipleChargingStops: Boolean) {
         sharedPreferences.edit().putBoolean(DriverPreferencesConsts.multipleChargingStops, multipleChargingStops).apply()
+        currentUser?.userPreferance?.areMultipleChargingStopsAllowed = multipleChargingStops
     }
 
     fun updatePushAllowTollRoadsInSP(allowTollRoads: Boolean) {
         sharedPreferences.edit().putBoolean(DriverPreferencesConsts.allowTollRoads, allowTollRoads).apply()
+        currentUser?.userPreferance?.areTollRoadsAllowed = allowTollRoads
     }
 
     fun updateIsPrivateStationsAllowedInSp(isPrivateStationsAllowed: Boolean) {
         sharedPreferences.edit().putBoolean(DriverPreferencesConsts.isPrivateStations, isPrivateStationsAllowed).apply()
+        currentUser?.userPreferance?.arePrivateChargingStationsAllowed = isPrivateStationsAllowed
     }
 
     suspend fun getArePushNotificationsAllowed() = withContext(Dispatchers.IO) {
