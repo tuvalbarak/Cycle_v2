@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothSocket
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.opengl.Visibility
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
@@ -38,6 +39,7 @@ import com.google.maps.android.PolyUtil
 import com.tdp.cycle.MainActivity
 import com.tdp.cycle.R
 import com.tdp.cycle.bases.CycleBaseFragment
+import com.tdp.cycle.common.gone
 import com.tdp.cycle.common.safeNavigate
 import com.tdp.cycle.common.toLocation
 import com.tdp.cycle.databinding.FragmentRoutesBinding
@@ -173,6 +175,15 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
                 startObdCommunication()
             }
+            initBatteryGraph()
+        }
+    }
+
+    private fun initBatteryGraph() {
+        binding?.apply {
+            routesModelBatteryGraph.gone()
+            routesBatteryTitle.gone()
+            routesModelBatteryGraph.max = 100
         }
     }
 
@@ -200,12 +211,6 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
             binding?.apply {
                 routesVehicleBrand.text = "Brand: " + myEv?.vehicleMeta?.brand
                 routesVehicleModel.text = "Model: " + myEv?.vehicleMeta?.model
-                val image = R.drawable.ic_tesla_y
-//                    if(ev?.id == 1L) R.drawable.ic_tesla_y
-//                    else R.drawable.ic_mg_marvel
-                routesModelImage.setImageDrawable(
-                    resources.getDrawable(image, null)
-                )
             }
         }
 
@@ -223,14 +228,17 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
         mapsViewModel.user.observe(viewLifecycleOwner) { user ->
             mapsViewModel.getMyEv()
-            binding?.routesUserName?.text = user?.let {
-                "Hey, ${user.name?.split(" ")?.firstOrNull()}"
-            } ?: ""
+//            binding?.routesUserName?.text = user?.let {
+//                "Hey, ${user.name?.split(" ")?.firstOrNull()}"
+//            } ?: ""
         }
 
         mapsViewModel.batteryPercentage.observe(viewLifecycleOwner) { batteryPercentage ->
             batteryPercentage?.let {
                 binding?.routesBatteryLevel?.text = "Battery: $it%"
+                binding?.routesModelBatteryGraph?.visibility = View.VISIBLE
+                binding?.routesBatteryTitle?.visibility = View.VISIBLE
+                binding?.routesModelBatteryGraph?.progress = it.roundToInt()
             }
 
         }
