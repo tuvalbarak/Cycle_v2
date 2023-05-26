@@ -99,6 +99,9 @@ dependencies {
     // Maps SDK for Android Utility Library KTX Library
     implementation 'com.google.maps.android:maps-utils-ktx:3.0.0'
 
+    // Places SDK
+    implementation 'com.google.android.libraries.places:places:3.1.0'
+
     // Firebase platform
     implementation platform('com.google.firebase:firebase-bom:31.2.2')
     implementation 'com.google.firebase:firebase-analytics-ktx'

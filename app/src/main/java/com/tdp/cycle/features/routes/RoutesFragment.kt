@@ -3,6 +3,7 @@ package com.tdp.cycle.features.routes
 import android.Manifest
 import android.bluetooth.BluetoothSocket
 import android.content.pm.PackageManager
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.opengl.Visibility
@@ -13,6 +14,8 @@ import android.util.Log
 import android.view.View
 import android.widget.EditText
 import androidx.annotation.RequiresApi
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -35,6 +38,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.google.maps.android.PolyUtil
 import com.tdp.cycle.MainActivity
 import com.tdp.cycle.R
@@ -61,6 +68,21 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private var currentLocationString: String? = null
     private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStation?>>()
     private var myMarker: Marker? = null
+
+    private val startAutocomplete =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val intent = result.data
+                if (intent != null) {
+                    val place = Autocomplete.getPlaceFromIntent(intent)
+                    Log.i("CreateChargingStationFragment", "Place: ${place.name}, ${place.id} ${place.addressComponents}")
+                    binding?.routesSearchEditText?.setText(place.address)
+                }
+            } else if (result.resultCode == Activity.RESULT_CANCELED) {
+                // The user canceled the operation.
+                Log.i("CreateChargingStationFragment", "User canceled autocomplete")
+            }
+        }
 
 
 //    private var mainActivity: MainActivity? by lazy { (activity as? MainActivity) }
@@ -163,8 +185,27 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         mapsViewModel.getUserMe()
     }
 
+    private fun intentAddress() {
+        // Initialize the SDK
+        Places.initialize(requireContext(), "AIzaSyAJIBntjoplGTf0G5yqAKUr_5xbiARll4Y")
+
+        // Set the fields to specify which types of place data to
+        // return after the user has made a selection.
+        val fields = listOf(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.ADDRESS_COMPONENTS)
+
+        // Start the autocomplete intent.
+        val intent = Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields)
+            .build(requireContext())
+        startAutocomplete.launch(intent)
+    }
+
     private fun initUi() {
         binding?.apply {
+
+            routesSearchEditText.setOnFocusChangeListener { view, b ->
+                intentAddress()
+            }
+
 
             routesSearchButton.setOnClickListener {
 
