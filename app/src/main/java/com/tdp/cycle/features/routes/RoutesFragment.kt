@@ -202,7 +202,13 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private fun initUi() {
         binding?.apply {
 
-            routesSearchEditText.setOnFocusChangeListener { view, b ->
+            routesSearchEditText.setOnFocusChangeListener { view, isFocused ->
+                if (isFocused) {
+                    intentAddress()
+                }
+            }
+
+            routesSearchEditText.setOnClickListener {
                 intentAddress()
             }
 
@@ -269,9 +275,9 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
         mapsViewModel.user.observe(viewLifecycleOwner) { user ->
             mapsViewModel.getMyEv()
-//            binding?.routesUserName?.text = user?.let {
-//                "Hey, ${user.name?.split(" ")?.firstOrNull()}"
-//            } ?: ""
+            binding?.routesUserName?.text = user?.let {
+                "${user.name?.split(" ")?.firstOrNull()}"
+            } ?: ""
         }
 
         mapsViewModel.batteryPercentage.observe(viewLifecycleOwner) { batteryPercentage ->
