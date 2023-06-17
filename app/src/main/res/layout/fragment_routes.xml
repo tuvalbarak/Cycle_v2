@@ -108,27 +108,27 @@
         app:cardElevation="8dp"
         app:cardCornerRadius="50dp">
 
-        <LinearLayout
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:background="@drawable/speed_background"
-            android:gravity="center"
-            android:orientation="vertical">
+<!--        <LinearLayout-->
+<!--            android:layout_width="60dp"-->
+<!--            android:layout_height="60dp"-->
+<!--            android:background="@drawable/speed_background"-->
+<!--            android:gravity="center"-->
+<!--            android:orientation="vertical">-->
 
-            <TextView
-                android:id="@+id/routesFragmentKmhValue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                tools:text="500"
-                android:textColor="@color/primary_blue"/>
+<!--            <TextView-->
+<!--                android:id="@+id/routesFragmentKmhValue"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                tools:text="500"-->
+<!--                android:textColor="@color/primary_blue"/>-->
 
-            <TextView
-                android:id="@+id/routesFragmentKmhTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                tools:text="km/h" />
+<!--            <TextView-->
+<!--                android:id="@+id/routesFragmentKmhTitle"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                tools:text="km/h" />-->
 
-        </LinearLayout>
+<!--        </LinearLayout>-->
 
     </androidx.cardview.widget.CardView>
 
@@ -188,15 +188,16 @@
                 app:layout_constraintTop_toBottomOf="@id/routesElevation"
                 app:layout_constraintStart_toStartOf="parent"
                 android:layout_marginTop="4dp" />
+
             <TextView
-                android:id="@+id/rpm"
+                android:id="@+id/routesChargingTime"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Rpm: N/A"
                 android:textColor="@color/primary_blue"
                 app:layout_constraintTop_toBottomOf="@id/routesETA"
                 app:layout_constraintStart_toStartOf="parent"
-                android:layout_marginTop="4dp" />
+                android:layout_marginTop="4dp"
+                android:visibility="gone"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

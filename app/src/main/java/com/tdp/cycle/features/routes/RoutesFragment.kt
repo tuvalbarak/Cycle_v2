@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.opengl.Visibility
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
@@ -22,7 +21,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import br.ufrn.imd.obd.commands.ObdCommandGroup
@@ -47,6 +45,7 @@ import com.tdp.cycle.MainActivity
 import com.tdp.cycle.R
 import com.tdp.cycle.bases.CycleBaseFragment
 import com.tdp.cycle.common.gone
+import com.tdp.cycle.common.isNotNull
 import com.tdp.cycle.common.safeNavigate
 import com.tdp.cycle.common.toLocation
 import com.tdp.cycle.databinding.FragmentRoutesBinding
@@ -74,9 +73,14 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
             if (result.resultCode == Activity.RESULT_OK) {
                 val intent = result.data
                 if (intent != null) {
+                    //Got back from auto-complete screen -
                     val place = Autocomplete.getPlaceFromIntent(intent)
+
                     Log.i("CreateChargingStationFragment", "Place: ${place.name}, ${place.id} ${place.addressComponents}")
-                    binding?.routesSearchEditText?.setText(place.address)
+                    place.address?.let { address ->
+                        onAutoCompleteFinished(address)
+                    }
+//                    binding?.routesSearchEditText?.setText(place.address)
                 }
             } else if (result.resultCode == Activity.RESULT_CANCELED) {
                 // The user canceled the operation.
@@ -150,7 +154,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
                         val response3 = obdCommands.result
                         val response4 = obdCommands.name
 
-                        mapsViewModel.rpmValue.postValue(response3.toString())
+//                        mapsViewModel.rpmValue.postValue(response3.toString())
 
 
 
@@ -213,17 +217,24 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
             }
 
 
-            routesSearchButton.setOnClickListener {
-
-                mapsViewModel.getDirections(
-                    origin = currentLocationString ?: "Ana Frank 14, Ramat-Gan",
-                    destination = routesSearchEditText.text.toString()
-                )
-
-                startObdCommunication()
-            }
+//            routesSearchButton.setOnClickListener {
+//
+//                mapsViewModel.getDirections(
+//                    origin = currentLocationString ?: "Ana Frank 14, Ramat-Gan",
+//                    destination = routesSearchEditText.text.toString()
+//                )
+//
+////                startObdCommunication()
+//            }
             initBatteryGraph()
         }
+    }
+
+    private fun onAutoCompleteFinished(address: String) {
+        mapsViewModel.getDirections(
+            origin = currentLocationString ?: "Ana Frank 14, Ramat-Gan",
+            destination = address
+        )
     }
 
     private fun initBatteryGraph() {
@@ -238,7 +249,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
         mapsViewModel.bestRoute.observe(viewLifecycleOwner) { mapsDirectionResponse ->
             drawBestRoute(mapsDirectionResponse)
-            onRouteDrew(mapsDirectionResponse?.legs?.firstOrNull()?.duration?.text.toString())
+            onRouteDrew()
         }
 
         mapsViewModel.geocode.observe(viewLifecycleOwner) { mapsGeocodeResults ->
@@ -287,12 +298,13 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
                 binding?.routesBatteryTitle?.visibility = View.VISIBLE
                 binding?.routesModelBatteryGraph?.progress = it.roundToInt()
             }
-
         }
 
-        mapsViewModel.rpmValue.observe(viewLifecycleOwner) { rpm ->
-            rpm?.let {
-                binding?.rpm?.text = "Rpm: $it%"
+        mapsViewModel.routeEtaAndChargingEtaEvent.observe(viewLifecycleOwner) { routeEtaAndChargingEtaEvent ->
+            binding?.apply {
+                routesETA.text = "ETA: ${routeEtaAndChargingEtaEvent.first}"
+                routesChargingTime.isVisible = routeEtaAndChargingEtaEvent.second.isNotNull()
+                routesChargingTime.text = "Charging Time: ${routeEtaAndChargingEtaEvent.second}"
             }
 
         }
@@ -481,9 +493,8 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
     }
 
-    private fun onRouteDrew(ETA: String) {
+    private fun onRouteDrew() {
         binding?.apply {
-            routesETA.text = "ETA: $ETA"
             routesFooter.isVisible = false
         }
     }

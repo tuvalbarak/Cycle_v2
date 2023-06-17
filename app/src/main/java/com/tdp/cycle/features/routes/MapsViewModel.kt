@@ -6,16 +6,15 @@ import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.tdp.cycle.bases.CycleBaseViewModel
 import com.tdp.cycle.common.deg2rad
+import com.tdp.cycle.common.logd
 import com.tdp.cycle.common.rad2deg
 import com.tdp.cycle.models.cycle_server.Battery
 import com.tdp.cycle.models.cycle_server.ChargingStation
 import com.tdp.cycle.models.cycle_server.ElectricVehicle
 import com.tdp.cycle.models.cycle_server.User
-import com.tdp.cycle.models.cycle_server.VehicleMeta
 import com.tdp.cycle.models.responses.*
 import com.tdp.cycle.remote.networking.RemoteResponseError
 import com.tdp.cycle.remote.networking.RemoteResponseSuccess
-import com.tdp.cycle.remote.networking.ResponseSuccess
 import com.tdp.cycle.remote.networking.getErrorMsgByType
 import com.tdp.cycle.repositories.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -53,11 +52,9 @@ class MapsViewModel @Inject constructor(
     val currentUserLocation = MutableLiveData(false)
     val weather = MutableLiveData<WeatherResponse>()
     val isObdAvailable = MutableLiveData<Boolean>()
+    val routeEtaAndChargingEtaEvent = MutableLiveData<Pair<String?, String?>>()
     private var isInRoute = false
     private var originLocation: LatLng? = null
-
-    val rpmValue: MutableLiveData<String> = MutableLiveData("N/A")
-
 
     init {
 
@@ -201,6 +198,14 @@ class MapsViewModel @Inject constructor(
 //        }
     }
 
+    private fun hoursToTime(hours: Double): String {
+        val totalMinutes = (hours * 60).toInt()
+        val formattedHours = totalMinutes / 60
+        val formattedMinutes = totalMinutes % 60
+
+        return String.format("%d hours %02d mins", formattedHours, formattedMinutes)
+    }
+
     fun getDirections(origin: String, destination: String) {
         isInRoute = true
         safeViewModelScopeIO {
@@ -234,14 +239,31 @@ class MapsViewModel @Inject constructor(
 
                     if (modifiedDirectionsResponse.isSuccessful) {
                         getBestRouteAccordingToGoogle(modifiedDirectionsResponse.body()?.routes)?.let { route ->
+                            user.value?.myElectricVehicle?.let { myEvId ->
+                                //Charge needed (kWh) / Charger power (kW) = Hours of charging time
+                                val currentEv = (vehiclesRepository.getElectricVehiclesById(myEvId) as? RemoteResponseSuccess)?.data
+                                val batteryCapacity = currentEv?.battery?.batteryCapacity?.toFloat()
+                                val percentageLeft = 1.0.minus((batteryPercentage.value ?: 0.0).div(100.0))
+                                val chargerPower = (station.power?.times(1000f))?.toDouble() ?: 1.0
+                                val chargingNeeded = batteryCapacity?.times(percentageLeft) ?: 0.0
+                                val hoursOfCharging = chargingNeeded.div(chargerPower)
+                                val chargingTime = hoursToTime(hoursOfCharging)
+
+                                val secondsInRoute = route.legs?.firstOrNull()?.duration?.value?.toDouble() ?: 0.0
+                                val hoursInRoute = secondsInRoute / 60.0 / 60.0
+                                val routeDuration = hoursToTime(hoursInRoute)
+                                routeEtaAndChargingEtaEvent.postValue(Pair(routeDuration, chargingTime))
+                            }
                             bestRoute.postValue(route)
                         }
                     }
 
                 } ?: run {
 //                    Don't need to stop
-                    recommendedRoute?.let {
-                        bestRoute.postValue(it)
+                    recommendedRoute?.let { route ->
+                        val routeDuration = route.legs?.firstOrNull()?.duration?.text ?: ""
+                        routeEtaAndChargingEtaEvent.postValue(Pair(routeDuration, null))
+                        bestRoute.postValue(route)
                     }
                 }
             }
