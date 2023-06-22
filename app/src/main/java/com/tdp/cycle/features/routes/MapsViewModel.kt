@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.tdp.cycle.bases.CycleBaseViewModel
+import com.tdp.cycle.common.SingleLiveEvent
 import com.tdp.cycle.common.deg2rad
 import com.tdp.cycle.common.rad2deg
 import com.tdp.cycle.models.cycle_server.Battery
@@ -51,7 +52,8 @@ class MapsViewModel @Inject constructor(
     val myEvEvent = MutableLiveData<ElectricVehicle?>()
     val currentUserLocation = MutableLiveData(false)
     val weather = MutableLiveData<WeatherResponse>()
-    val isObdAvailable = MutableLiveData<Boolean>()
+//    val isObdAvailable = MutableLiveData<Boolean>()
+    val isObdAvailable = SingleLiveEvent<Boolean>()
     val routeEtaAndChargingEtaEvent = MutableLiveData<Pair<String?, String?>>()
     val optimizingRouteEvent = MutableLiveData<Pair<Boolean, ChargingStation?>>()
     private var isInRoute = false
@@ -73,7 +75,7 @@ class MapsViewModel @Inject constructor(
             pollChargingStationStatus()
 
             //Currently no obd integration -> always false.
-            isObdAvailable.postValue(false)
+            isObdAvailable.postRawValue(false)
 
             progressData.endProgress()
         }

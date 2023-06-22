@@ -69,7 +69,6 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStation?>>()
     private var myMarker: Marker? = null
     private var mapsPolyline: Polyline? = null
-    private var prevStation: ChargingStation? = null
 
     private val startAutocomplete =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -100,14 +99,14 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
 //        if(savedInstanceState == null) {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        if(++counter == 2) {
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                (childFragmentManager.findFragmentById(R.id.routesMap) as? SupportMapFragment)?.getMapAsync(this)
+                initObservers()
 
-            (childFragmentManager.findFragmentById(R.id.routesMap) as? SupportMapFragment)?.getMapAsync(this)
-            initObservers()
-
-        } else {
+            } else {
 //            val builder = AlertDialog.Builder(requireContext())
 //            builder.setTitle("Location approval needed")
 //            builder.setCancelable(false)
@@ -116,10 +115,10 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 //                dialog.dismiss()
 //            }
 //            builder.show()
+            }
+
+            initUi()
         }
-
-        initUi()
-
     }
 
     private fun startObdCommunication() {
@@ -366,38 +365,40 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
         }
 
-        mapsViewModel.isObdAvailable.observe(viewLifecycleOwner) { isObdAvailable ->
-            if(isObdAvailable) {
-                //Nothing for now
+        mapsViewModel.isObdAvailable.observe(viewLifecycleOwner) { event ->
+            event?.getContentIfNotHandled()?.let { isObdAvailable ->
+                if(isObdAvailable) {
+                    //Nothing for now
 
-            } else {
-                //Show a dialog and ask for battery percentage
-                val inputEditTextField = EditText(requireActivity())
-                inputEditTextField.maxLines = 1
-                inputEditTextField.inputType = InputType.TYPE_CLASS_NUMBER
+                } else {
+                    //Show a dialog and ask for battery percentage
+                    val inputEditTextField = EditText(requireActivity())
+                    inputEditTextField.maxLines = 1
+                    inputEditTextField.inputType = InputType.TYPE_CLASS_NUMBER
 
-                val dialog = AlertDialog.Builder(requireContext())
-                    .setTitle("Couldn't connect to OBD")
-                    .setMessage("Enter your current EV's battery percentage...")
-                    .setView(inputEditTextField)
-                    .setCancelable(false)
-                    .setPositiveButton("Let's start") { arg0, arg1 ->
-                        val editTextInput = inputEditTextField .text.toString()
-                        mapsViewModel.updateBatteryPercentage(editTextInput.toDoubleOrNull())
-                    }
+                    val dialog = AlertDialog.Builder(requireContext())
+                        .setTitle("Couldn't connect to OBD")
+                        .setMessage("Enter your current EV's battery percentage...")
+                        .setView(inputEditTextField)
+                        .setCancelable(false)
+                        .setPositiveButton("Let's start") { arg0, arg1 ->
+                            val editTextInput = inputEditTextField .text.toString()
+                            mapsViewModel.updateBatteryPercentage(editTextInput.toDoubleOrNull())
+                        }
 //                    .setPositiveButton("Let's start") { _, _ ->
 //                        val editTextInput = inputEditTextField .text.toString()
 //                        Log.d(TAG, "percentage => $editTextInput")
 //                        mapsViewModel.updateBatteryPercentage(editTextInput.toDoubleOrNull())
 //                    }
 //                    .setNegativeButton("Cancel", null)
-                    .create()
-                dialog.show()
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
-                inputEditTextField.doOnTextChanged { text, start, before, count ->
-                    val textAsNumber = text?.toString()?.toIntOrNull() ?: -1
-                    val isValidPercentage = textAsNumber in 0..100
-                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = isValidPercentage
+                        .create()
+                    dialog.show()
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+                    inputEditTextField.doOnTextChanged { text, start, before, count ->
+                        val textAsNumber = text?.toString()?.toIntOrNull() ?: -1
+                        val isValidPercentage = textAsNumber in 0..100
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = isValidPercentage
+                    }
                 }
             }
         }
@@ -463,7 +464,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
                         if(shouldMoveCamera) {
                             //Updating camera location
-                            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,12f))
+                            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,13f))
                         }
                         //Adding a marker at the location (and removing previous one)
                         myMarker?.remove()
@@ -568,5 +569,6 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
     companion object {
         const val TAG = "RoutesFragmentTAG"
+        private var counter: Int = 0
     }
 }

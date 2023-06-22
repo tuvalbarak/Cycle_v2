@@ -43,6 +43,7 @@ import java.util.UUID
 @AndroidEntryPoint
 class MainActivity : CycleBaseActivity<ActivityMainBinding>(ActivityMainBinding::inflate), IProgressView {
 
+    private var routesFragment: RoutesFragment? = null
     private val navController by lazy {
         (supportFragmentManager.findFragmentById(R.id.mainActivityNavigation) as? NavHostFragment)?.navController
     }
@@ -296,7 +297,42 @@ class MainActivity : CycleBaseActivity<ActivityMainBinding>(ActivityMainBinding:
                 }
             }
         }
+
+        navController?.addOnDestinationChangedListener { _, destination, _ ->
+            if (destination.id == R.id.routesFragment) {
+                showRoutesFragment()
+            } else {
+                hideRoutesFragment()
+            }
+        }
+        // Initially show the RoutesFragment
+//        showRoutesFragment()
     }
+
+    private fun showRoutesFragment() {
+        if (routesFragment == null) {
+            routesFragment = supportFragmentManager.findFragmentByTag("routesFragment") as? RoutesFragment
+            if (routesFragment == null) {
+                routesFragment = RoutesFragment()
+                supportFragmentManager.beginTransaction()
+                    .add(R.id.mainActivityNavigation, routesFragment!!, "routesFragment")
+                    .commit()
+            }
+        }
+        supportFragmentManager.beginTransaction()
+            .show(routesFragment!!)
+            .commit()
+    }
+
+    private fun hideRoutesFragment() {
+        routesFragment?.let { fragment ->
+            supportFragmentManager.beginTransaction()
+                .hide(fragment)
+                .commit()
+        }
+    }
+
+
 
     @RequiresApi(Build.VERSION_CODES.S)
     fun handlePermissions() {
