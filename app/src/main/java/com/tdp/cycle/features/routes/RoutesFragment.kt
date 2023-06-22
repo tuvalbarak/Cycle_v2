@@ -154,10 +154,6 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
                         val response3 = obdCommands.result
                         val response4 = obdCommands.name
 
-//                        mapsViewModel.rpmValue.postValue(response3.toString())
-
-
-
                         // Receive the response into buffer from the OBD-II device.
 //                    val responseLength = inputStream.read(buffer)
 //
@@ -182,6 +178,55 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
             }
         }
     }
+
+//    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+//    suspend fun obdCommunicationFragment(bluetoothSocket: BluetoothSocket?) {
+//        withContext(Dispatchers.IO) {
+//            bluetoothSocket?.let {
+//                try {
+//                    val inputStream = it.inputStream
+//                    val outputStream = it.outputStream
+//                    val buffer = ByteArray(1024)
+//                    // Group many obd commands into a single command ()
+//                    val obdCommands = ObdCommandGroup()
+//                    obdCommands.add(RPMCommand())
+//
+//                    // Run all commands at once
+//                    var obdFetching = true
+//                    while(obdFetching) {
+//                        val response = obdCommands.run(inputStream, outputStream)
+//                        val response2 = obdCommands.commandPID
+//                        val response3 = obdCommands.result
+//                        val response4 = obdCommands.name
+//
+////                        mapsViewModel.rpmValue.postValue(response3.toString())
+//
+//
+//
+//                        // Receive the response into buffer from the OBD-II device.
+////                    val responseLength = inputStream.read(buffer)
+////
+////                    // Parse the response to extract the RPM value.
+////                    val responseString = String(buffer, 0, responseLength)
+//
+//                        Log.d("ressssssssponse", response.toString())
+//                        Log.d("ressssssssponse", response2.toString())
+//                        Log.d("ressssssssponse", response3.toString())
+//                        Log.d("ressssssssponse", response4.toString())
+////                    Log.d("ressssssssponse", responseString)
+//
+//                        delay(10)
+//                    }
+//
+//
+//                } catch (e: Exception) {
+//                    Log.e(RoutesFragment.TAG, "Could not connect to obd", e)
+//                    null
+//                }
+//
+//            }
+//        }
+//    }
 
 
     override fun onResume() {
@@ -224,7 +269,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 //                    destination = routesSearchEditText.text.toString()
 //                )
 //
-////                startObdCommunication()
+                startObdCommunication()
 //            }
             initBatteryGraph()
         }
@@ -303,8 +348,9 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         mapsViewModel.routeEtaAndChargingEtaEvent.observe(viewLifecycleOwner) { routeEtaAndChargingEtaEvent ->
             binding?.apply {
                 routesETA.text = "ETA: ${routeEtaAndChargingEtaEvent.first}"
-                routesChargingTime.isVisible = routeEtaAndChargingEtaEvent.second.isNotNull()
-                routesChargingTime.text = "Charging Time: ${routeEtaAndChargingEtaEvent.second}"
+                routesChargingTime.gone()
+//                routesChargingTime.isVisible = routeEtaAndChargingEtaEvent.second.isNotNull()
+//                routesChargingTime.text = "Charging Time: ${routeEtaAndChargingEtaEvent.second}"
             }
 
         }

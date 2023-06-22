@@ -119,7 +119,9 @@ class ChargingStationFragment: CycleBaseFragment<FragmentChargingStationBinding>
                 chargingStation?.let {
                     chargingStationName.text = chargingStation.name
                     chargingStationPower.text = chargingStation.power.toString()
-                    chargingStationPrice.text = chargingStation.priceDetails
+                    chargingStationPrice.text =
+                        if (chargingStation.priceDetails.isNullOrBlank()) "1.40" + "\u20AA"
+                        else chargingStation.priceDetails
                     chargingStationAddress.text = "${chargingStation.address}, ${chargingStation.city}"
                     chargingStationCondition.text = chargingStation.condition
                     chargingStationChargers.text = "${chargingStation.count.toString()} Chargers"
