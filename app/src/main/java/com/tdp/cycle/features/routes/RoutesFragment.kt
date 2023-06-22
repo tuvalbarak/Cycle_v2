@@ -35,17 +35,18 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.Polyline
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
+import com.google.android.material.snackbar.Snackbar
 import com.google.maps.android.PolyUtil
 import com.tdp.cycle.MainActivity
 import com.tdp.cycle.R
 import com.tdp.cycle.bases.CycleBaseFragment
 import com.tdp.cycle.common.gone
-import com.tdp.cycle.common.isNotNull
 import com.tdp.cycle.common.safeNavigate
 import com.tdp.cycle.common.toLocation
 import com.tdp.cycle.databinding.FragmentRoutesBinding
@@ -67,6 +68,8 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private var currentLocationString: String? = null
     private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStation?>>()
     private var myMarker: Marker? = null
+    private var mapsPolyline: Polyline? = null
+    private var prevStation: ChargingStation? = null
 
     private val startAutocomplete =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -297,12 +300,20 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
             onRouteDrew()
         }
 
+        mapsViewModel.optimizingRouteEvent.observe(viewLifecycleOwner) { optimizingAndStation ->
+            if (optimizingAndStation.first) {
+                removePrevRouteIfExisted(optimizingAndStation.second)
+            }
+        }
+
         mapsViewModel.geocode.observe(viewLifecycleOwner) { mapsGeocodeResults ->
             currentLocationString = mapsGeocodeResults?.firstOrNull()?.formattedAddress
         }
 
         mapsViewModel.chargingStations.observe(viewLifecycleOwner) { chargingStations ->
-            markChargingStations(chargingStations)
+            if (chargingStations.second) {
+                markChargingStations(chargingStations.first)
+            }
         }
 
         mapsViewModel.elevationDifference.observe(viewLifecycleOwner) { elevation ->
@@ -470,13 +481,23 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
     }
 
+    private fun removePrevRouteIfExisted(chargingStation: ChargingStation?) {
+        mapsPolyline?.let { polyline ->
+            //If mapsPolyline is not null => user is already in a route => showing snackbar
+            binding?.apply {
+                Snackbar.make(root, "${chargingStation?.name}'s station status has been change. Your route is being optimized.", Snackbar.LENGTH_LONG).show()
+            }
+            polyline.remove()
+        }
+    }
+
     private fun drawBestRoute(route: Route?) {
         val polyline = PolylineOptions()
             .addAll(PolyUtil.decode(route?.overviewPolyline?.points))
-            .width(16f)
+            .width(12f)
             .color(mapsViewModel.getSelectedRouteColor())
 
-        googleMap?.addPolyline(polyline)
+        mapsPolyline = googleMap?.addPolyline(polyline)
 
         route?.legs?.lastOrNull()?.let { leg ->
             leg.endLocation?.let { endLocation ->

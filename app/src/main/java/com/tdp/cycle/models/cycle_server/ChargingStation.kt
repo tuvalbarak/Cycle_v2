@@ -17,7 +17,7 @@ data class ChargingStation(
     val count: Int? = null,
     val power: Float? = null,
     val connectorType: String? = null,
-    val condition: String? = null,
+    var condition: String? = null,
     val isPrivate: Boolean? = null,
     val ratings: List<Float?>? = null,
     val comments: List<Comment?>? = null,

@@ -6,7 +6,6 @@ import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.maps.model.LatLng
 import com.tdp.cycle.bases.CycleBaseViewModel
 import com.tdp.cycle.common.deg2rad
-import com.tdp.cycle.common.logd
 import com.tdp.cycle.common.rad2deg
 import com.tdp.cycle.models.cycle_server.Battery
 import com.tdp.cycle.models.cycle_server.ChargingStation
@@ -18,6 +17,7 @@ import com.tdp.cycle.remote.networking.RemoteResponseSuccess
 import com.tdp.cycle.remote.networking.getErrorMsgByType
 import com.tdp.cycle.repositories.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 import kotlin.math.*
 
@@ -45,7 +45,7 @@ class MapsViewModel @Inject constructor(
     val bestRoute = MutableLiveData<Route>()
     val geocode = MutableLiveData<List<MapsGeocodeResults?>?>()
     val elevationDifference = MutableLiveData<Double?>()
-    val chargingStations = MutableLiveData<List<ChargingStation?>?>()
+    val chargingStations = MutableLiveData<Pair<List<ChargingStation?>?, Boolean>>()
     val bestStation = MutableLiveData<ChargingStation?>()
 //    val electricVehiclesEvent = MutableLiveData<List<ElectricVehicleModel>>()
     val myEvEvent = MutableLiveData<ElectricVehicle?>()
@@ -53,20 +53,24 @@ class MapsViewModel @Inject constructor(
     val weather = MutableLiveData<WeatherResponse>()
     val isObdAvailable = MutableLiveData<Boolean>()
     val routeEtaAndChargingEtaEvent = MutableLiveData<Pair<String?, String?>>()
+    val optimizingRouteEvent = MutableLiveData<Pair<Boolean, ChargingStation?>>()
     private var isInRoute = false
     private var originLocation: LatLng? = null
+    private var origin: String = ""
+    private var destination: String = ""
 
     init {
 
         safeViewModelScopeIO {
             progressData.startProgress()
             when(val response = chargingStationsRepository.getChargingStations()) {
-                is RemoteResponseSuccess -> chargingStations.postValue(response.data)
+                is RemoteResponseSuccess -> chargingStations.postValue(Pair(response.data, true))
                 is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
                 else -> { }
             }
 //            chargingStationsRepositoryDepricated.fetchChargingStationsLocations()
             updateCurrentLocation()
+            pollChargingStationStatus()
 
             //Currently no obd integration -> always false.
             isObdAvailable.postValue(false)
@@ -188,26 +192,63 @@ class MapsViewModel @Inject constructor(
      * If the user is currently on route --> update his location on the map every X seconds.
      * */
     private fun updateCurrentLocation() {
-//        safeViewModelScopeIO {
-//            while(true) {
-//                delay(10000)
-//                if(isInRoute) {
-//                    currentUserLocation.postValue(true)
-//                }
-//            }
-//        }
+        safeViewModelScopeIO {
+            while(true) {
+                delay(10000)
+                if(isInRoute) {
+                    currentUserLocation.postValue(true)
+                }
+            }
+        }
+    }
+
+    /**
+     * Checking the target charging station's status -> updating station if needed
+     * */
+    private fun pollChargingStationStatus() {
+        safeViewModelScopeIO {
+            while (true) {
+                delay(10000)
+                if (isInRoute) {
+                    bestStation.value?.id?.let { stationId ->
+                        when(val response = chargingStationsRepository.getChargingStationById(stationId)) {
+                            is RemoteResponseSuccess -> {
+                                if (response.data?.condition != "Available") {
+                                    optimizingRouteEvent.postValue(Pair(true, response.data))
+                                    //Posting value of stations so UI will be updated
+                                    val currentChargingStations = chargingStations.value?.first?.toMutableList()
+                                    currentChargingStations?.find { it?.id == stationId }?.let { station ->
+                                        currentChargingStations.remove(station)
+                                        station.condition = response.data?.condition
+                                        currentChargingStations.add(station)
+                                        chargingStations.postValue(Pair(currentChargingStations, false))
+                                    }
+
+                                    //Getting new route
+                                    getDirections(origin, destination)
+                                }
+                            }
+                            is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                            else -> { }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun hoursToTime(hours: Double): String {
         val totalMinutes = (hours * 60).toInt()
         val formattedHours = totalMinutes / 60
         val formattedMinutes = totalMinutes % 60
-
         return String.format("%d hours %02d mins", formattedHours, formattedMinutes)
     }
 
     fun getDirections(origin: String, destination: String) {
+        this.origin = origin
+        this.destination = destination
         isInRoute = true
+
         safeViewModelScopeIO {
             progressData.startProgress()
 
@@ -325,12 +366,13 @@ class MapsViewModel @Inject constructor(
             // Steps is all the turnovers we need to make along the route. e.g., פנה ימינה לרחוב המרי
             leg?.steps?.forEach { step ->
                 // Now crossing between all possible steps (from all possible routes & legs) and our charging stations
-                chargingStations.value?.forEach { chargingStation ->
-                    val arePrivateStationsAllowed = user.value?.userPreferance?.arePrivateChargingStationsAllowed ?: false
-                    if(chargingStation?.isPrivate == true || !arePrivateStationsAllowed) {
+                chargingStations.value?.first?.forEach { chargingStation ->
+//                    val arePrivateStationsAllowed = user.value?.userPreferance?.arePrivateChargingStationsAllowed ?: false
+//                    if(chargingStation?.isPrivate == true || !arePrivateStationsAllowed) {
+                    if (chargingStation?.condition == "Available") {
 
                         // Making sure nothing is null
-                        chargingStation?.lat?.let { chargingStationLat ->
+                        chargingStation.lat?.let { chargingStationLat ->
                             chargingStation.lng?.let { chargingStationLng ->
                                 step?.endLocation?.lat?.let { stepLat ->
                                     step.endLocation?.lng?.let { stepLng ->
@@ -372,6 +414,7 @@ class MapsViewModel @Inject constructor(
                                 }
                             }
                         }
+//                    }
                     }
                 }
             }
@@ -445,12 +488,12 @@ class MapsViewModel @Inject constructor(
     private fun handleFoundBestStation(best: ChargingStation?): ChargingStation? {
         bestStation.postValue(best)
 
-        val currentChargingStations = chargingStations.value?.toMutableList()
+        val currentChargingStations = chargingStations.value?.first?.toMutableList()
         currentChargingStations?.find { it?.id == best?.id }?.let {
             currentChargingStations.remove(best)
             best?.distanceFromRoute = best?.distanceFromRoute
             currentChargingStations.add(best)
-            chargingStations.postValue(currentChargingStations)
+            chargingStations.postValue(Pair(currentChargingStations, true))
 
         }
         return best
@@ -711,7 +754,7 @@ class MapsViewModel @Inject constructor(
                 // Steps is all the turnovers we need to make along the route. e.g., פנה ימינה לרחוב המרי
                 leg?.steps?.forEach { step ->
                     // Now crossing between all possible steps (from all possible routes & legs) and our charging stations
-                    chargingStations.value?.forEach { chargingStation ->
+                    chargingStations.value?.first?.forEach { chargingStation ->
                         // Making sure nothing is null
                         chargingStation?.lat?.let { chargingStationLat ->
                             chargingStation.lng?.let { chargingStationLng ->
@@ -753,12 +796,12 @@ class MapsViewModel @Inject constructor(
         currentBestStation?.distanceFromRoute = sortedDistances.firstOrNull()?.first
         bestStation.postValue(currentBestStation)
 
-        val currentChargingStations = chargingStations.value?.toMutableList()
+        val currentChargingStations = chargingStations.value?.first?.toMutableList()
         currentChargingStations?.find { it?.id == currentBestStation?.id }?.let { best ->
             currentChargingStations.remove(best)
             best.distanceFromRoute = currentBestStation?.distanceFromRoute
             currentChargingStations.add(best)
-            chargingStations.postValue(currentChargingStations)
+            chargingStations.postValue(Pair(currentChargingStations, true))
         }
 
         return routes
