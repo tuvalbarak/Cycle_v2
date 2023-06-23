@@ -43,7 +43,7 @@ class MapsViewModel @Inject constructor(
     val user = MutableLiveData<User?>()
 //    val routes = MutableLiveData<List<Route?>>()
     val batteryPercentage = MutableLiveData<Double>()
-    val bestRoute = MutableLiveData<Route>()
+    val bestRoute = MutableLiveData<Pair<Route?, Route?>>()
     val geocode = MutableLiveData<List<MapsGeocodeResults?>?>()
     val elevationDifference = MutableLiveData<Double?>()
     val chargingStations = MutableLiveData<Pair<List<ChargingStation?>?, Boolean>>()
@@ -273,40 +273,81 @@ class MapsViewModel @Inject constructor(
 
                 bestStation?.let { station ->
                     //Need to stop
-                    val waypoints = station.getLocation().toLatLngFormat()
-                    val modifiedDirectionsResponse = mapsRepository.getDirections(
+
+                    val routeUntilChargingStopResponse = mapsRepository.getDirections(
                         origin = origin,
-                        destination = destination,
-                        waypoints = "via:${waypoints}"
+                        destination = station.address ?: "",
                     )
 
-                    if (modifiedDirectionsResponse.isSuccessful) {
-                        getBestRouteAccordingToGoogle(modifiedDirectionsResponse.body()?.routes)?.let { route ->
-                            user.value?.myElectricVehicle?.let { myEvId ->
-                                //Charge needed (kWh) / Charger power (kW) = Hours of charging time
-                                val currentEv = (vehiclesRepository.getElectricVehiclesById(myEvId) as? RemoteResponseSuccess)?.data
-                                val batteryCapacity = currentEv?.battery?.batteryCapacity?.toFloat()
-                                val percentageLeft = 1.0.minus((batteryPercentage.value ?: 0.0).div(100.0))
-                                val chargerPower = (station.power?.times(1000f))?.toDouble() ?: 1.0
-                                val chargingNeeded = batteryCapacity?.times(percentageLeft) ?: 0.0
-                                val hoursOfCharging = chargingNeeded.div(chargerPower)
-                                val chargingTime = hoursToTime(hoursOfCharging)
+                    val routeAfterChargingStopResponse = mapsRepository.getDirections(
+                        origin = station.address ?: "",
+                        destination = destination
+                    )
 
-                                val secondsInRoute = route.legs?.firstOrNull()?.duration?.value?.toDouble() ?: 0.0
-                                val hoursInRoute = secondsInRoute / 60.0 / 60.0
-                                val routeDuration = hoursToTime(hoursInRoute)
-                                routeEtaAndChargingEtaEvent.postValue(Pair(routeDuration, chargingTime))
-                            }
-                            bestRoute.postValue(route)
+                    if (routeUntilChargingStopResponse.isSuccessful && routeAfterChargingStopResponse.isSuccessful) {
+                        val routeUntilChargingStop = getBestRouteAccordingToGoogle(routeUntilChargingStopResponse.body()?.routes)
+                        val routeAfterChargingStop = getBestRouteAccordingToGoogle(routeAfterChargingStopResponse.body()?.routes)
+
+                        user.value?.myElectricVehicle?.let { myEvId ->
+                            //Charge needed (kWh) / Charger power (kW) = Hours of charging time
+                            val currentEv = (vehiclesRepository.getElectricVehiclesById(myEvId) as? RemoteResponseSuccess)?.data
+                            val batteryCapacity = currentEv?.battery?.batteryCapacity?.toFloat()
+                            val percentageLeft = 1.0.minus((batteryPercentage.value ?: 0.0).div(100.0))
+                            val chargerPower = (station.power?.times(1000f))?.toDouble() ?: 1.0
+                            val chargingNeeded = batteryCapacity?.times(percentageLeft) ?: 0.0
+                            val hoursOfCharging = chargingNeeded.div(chargerPower)
+                            val chargingTime = hoursToTime(hoursOfCharging)
+
+                            val secondsInRouteUntilChargingStation = routeUntilChargingStop?.legs?.firstOrNull()?.duration?.value?.toDouble() ?: 0.0
+                            val secondsInRouteAfterChargingStation = routeAfterChargingStop?.legs?.firstOrNull()?.duration?.value?.toDouble() ?: 0.0
+                            val hoursInRoute = (secondsInRouteUntilChargingStation + secondsInRouteAfterChargingStation) / 60.0 / 60.0
+                            val routeDuration = hoursToTime(hoursInRoute)
+                            routeEtaAndChargingEtaEvent.postValue(Pair(routeDuration, chargingTime))
                         }
+                        bestRoute.postValue(
+                            Pair(
+                                routeUntilChargingStop,
+                                routeAfterChargingStop
+                            )
+                        )
+
                     }
+
+
+//                    val waypoints = station.getLocation().toLatLngFormat()
+//                    val modifiedDirectionsResponse = mapsRepository.getDirections(
+//                        origin = origin,
+//                        destination = destination,
+//                        waypoints = "via:${waypoints}"
+//                    )
+//
+//                    if (modifiedDirectionsResponse.isSuccessful) {
+//                        getBestRouteAccordingToGoogle(modifiedDirectionsResponse.body()?.routes)?.let { route ->
+//                            user.value?.myElectricVehicle?.let { myEvId ->
+//                                //Charge needed (kWh) / Charger power (kW) = Hours of charging time
+//                                val currentEv = (vehiclesRepository.getElectricVehiclesById(myEvId) as? RemoteResponseSuccess)?.data
+//                                val batteryCapacity = currentEv?.battery?.batteryCapacity?.toFloat()
+//                                val percentageLeft = 1.0.minus((batteryPercentage.value ?: 0.0).div(100.0))
+//                                val chargerPower = (station.power?.times(1000f))?.toDouble() ?: 1.0
+//                                val chargingNeeded = batteryCapacity?.times(percentageLeft) ?: 0.0
+//                                val hoursOfCharging = chargingNeeded.div(chargerPower)
+//                                val chargingTime = hoursToTime(hoursOfCharging)
+//
+//                                val secondsInRoute = route.legs?.firstOrNull()?.duration?.value?.toDouble() ?: 0.0
+//                                val hoursInRoute = secondsInRoute / 60.0 / 60.0
+//                                val routeDuration = hoursToTime(hoursInRoute)
+//                                routeEtaAndChargingEtaEvent.postValue(Pair(routeDuration, chargingTime))
+//                            }
+//                            bestRoute.postValue(route)
+//                        }
+//                    }
 
                 } ?: run {
 //                    Don't need to stop
                     recommendedRoute?.let { route ->
                         val routeDuration = route.legs?.firstOrNull()?.duration?.text ?: ""
                         routeEtaAndChargingEtaEvent.postValue(Pair(routeDuration, null))
-                        bestRoute.postValue(route)
+                        bestRoute.postValue(Pair(route, null))
                     }
                 }
             }
@@ -830,7 +871,9 @@ class MapsViewModel @Inject constructor(
         Color.argb(255, 180, 44, 10),
     )
 
-    fun getSelectedRouteColor() = Color.argb(255, 48, 250, 2)
+//    fun getRouteUntilChargingStationColor() = Color.argb(179,204,174,1)
+    fun getRouteUntilChargingStationColor() = Color.parseColor("#a4ffa4")
+    fun getRouteAfterChargingStationColor() =  Color.parseColor("#91d2ff")
 
 
     companion object {

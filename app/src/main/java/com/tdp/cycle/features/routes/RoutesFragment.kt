@@ -68,7 +68,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private var currentLocationString: String? = null
     private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStation?>>()
     private var myMarker: Marker? = null
-    private var mapsPolyline: Polyline? = null
+    private var mapsPolyline: Pair<Polyline?, Polyline?> = Pair(null, null)
 
     private val startAutocomplete =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -328,7 +328,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
 
         mapsViewModel.currentUserLocation.observe(viewLifecycleOwner) {
-            handleCurrentLocation(false)
+            handleCurrentLocation(true)
         }
 
         mapsViewModel.progressData.observe(viewLifecycleOwner) { isLoading ->
@@ -464,7 +464,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
                         if(shouldMoveCamera) {
                             //Updating camera location
-                            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,13f))
+                            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,16f))
                         }
                         //Adding a marker at the location (and removing previous one)
                         myMarker?.remove()
@@ -483,35 +483,68 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     }
 
     private fun removePrevRouteIfExisted(chargingStation: ChargingStation?) {
-        mapsPolyline?.let { polyline ->
+        mapsPolyline.let { polyline ->
             //If mapsPolyline is not null => user is already in a route => showing snackbar
             binding?.apply {
                 Snackbar.make(root, "${chargingStation?.name}'s station status has been change. Your route is being optimized.", Snackbar.LENGTH_LONG).show()
             }
-            polyline.remove()
+            polyline.first?.remove()
+            polyline.second?.remove()
         }
     }
 
-    private fun drawBestRoute(route: Route?) {
-        val polyline = PolylineOptions()
-            .addAll(PolyUtil.decode(route?.overviewPolyline?.points))
-            .width(12f)
-            .color(mapsViewModel.getSelectedRouteColor())
+    private fun drawBestRoute(routes: Pair<Route?, Route?>) {
 
-        mapsPolyline = googleMap?.addPolyline(polyline)
+        val polylineUntilChargingStop = PolylineOptions()
+            .addAll(PolyUtil.decode(routes.first?.overviewPolyline?.points))
+            .width(20f)
+            .color(mapsViewModel.getRouteUntilChargingStationColor())
 
-        route?.legs?.lastOrNull()?.let { leg ->
-            leg.endLocation?.let { endLocation ->
-                LatLng(endLocation.lat ?: 0.0, endLocation.lng ?: 0.0).let { latlng ->
-                    googleMap?.addMarker(
-                        MarkerOptions()
-                            .position(latlng)
-                            .title(leg.endAddress)
-                    )
+        routes.second?.let {
+            val polylineAfterChargingStop = PolylineOptions()
+                .addAll(PolyUtil.decode(routes.second?.overviewPolyline?.points))
+                .width(20f)
+                .color(mapsViewModel.getRouteAfterChargingStationColor())
+
+            mapsPolyline = Pair(
+                googleMap?.addPolyline(polylineUntilChargingStop),
+                googleMap?.addPolyline(polylineAfterChargingStop)
+            )
+
+            routes.second?.legs?.lastOrNull()?.let { leg ->
+                leg.endLocation?.let { endLocation ->
+                    LatLng(endLocation.lat ?: 0.0, endLocation.lng ?: 0.0).let { latlng ->
+                        googleMap?.addMarker(
+                            MarkerOptions()
+                                .position(latlng)
+                                .title(leg.endAddress)
+                        )
+                    }
+                }
+            }
+        } ?: run {
+
+            mapsPolyline = Pair(
+                googleMap?.addPolyline(polylineUntilChargingStop),
+                null
+            )
+
+            routes.first?.legs?.lastOrNull()?.let { leg ->
+                leg.endLocation?.let { endLocation ->
+                    LatLng(endLocation.lat ?: 0.0, endLocation.lng ?: 0.0).let { latlng ->
+                        googleMap?.addMarker(
+                            MarkerOptions()
+                                .position(latlng)
+                                .title(leg.endAddress)
+                        )
+                    }
                 }
             }
         }
+
         removeUnnecessaryStations()
+        googleMap?.moveCamera(CameraUpdateFactory.zoomOut())
+
     }
 
     private fun drawAllRoutes(routes: List<Route?>) {
@@ -523,7 +556,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
             val color: Int
             val width: Float
             if(isRouteSelected) {
-                color = mapsViewModel.getSelectedRouteColor()
+                color = mapsViewModel.getRouteUntilChargingStationColor()
                 width = 16f
             } else {
                 color = routesColors.random()
