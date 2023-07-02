@@ -21,6 +21,7 @@ import com.tdp.cycle.common.isNull
 import com.tdp.cycle.common.logd
 import com.tdp.cycle.common.show
 import com.tdp.cycle.databinding.FragmentChargingStationBinding
+import com.tdp.cycle.features.routes.MapsViewModel
 import com.tdp.cycle.models.cycle_server.ChargingStation
 import com.tdp.cycle.models.cycle_server.ChargingStationStatus
 import com.tdp.cycle.models.cycle_server.Comment
@@ -32,6 +33,7 @@ import java.text.DecimalFormat
 class ChargingStationFragment: CycleBaseFragment<FragmentChargingStationBinding>(FragmentChargingStationBinding::inflate) {
 
     private val chargingStationViewModel: ChargingStationsViewModel by activityViewModels()
+    private val mapsViewModel: MapsViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -145,18 +147,33 @@ class ChargingStationFragment: CycleBaseFragment<FragmentChargingStationBinding>
             }
         }
 
-        chargingStationViewModel.commentPosted.observe(viewLifecycleOwner) { isCommentPosted ->
-            binding?.apply {
-                if(isCommentPosted) {
-                    Snackbar.make(root, "Comment was posted successfully", Snackbar.LENGTH_SHORT).show()
+        chargingStationViewModel.commentPosted.observe(viewLifecycleOwner) { event ->
+            event?.getContentIfNotHandled()?.let { isCommentPosted ->
+                binding?.apply {
+                    if(isCommentPosted) {
+//                    Snackbar.make(root, "Comment was posted successfully", Snackbar.LENGTH_SHORT).show()
+                        mapsViewModel.onUserCommented()
+                    }
                 }
             }
         }
 
-        chargingStationViewModel.ratingPosted.observe(viewLifecycleOwner) { isRatingPosted ->
+        chargingStationViewModel.ratingPosted.observe(viewLifecycleOwner) { event ->
+            event?.getContentIfNotHandled()?.let { isRatingPosted ->
+                binding?.apply {
+                    if(isRatingPosted) {
+//                    Snackbar.make(root, "Rating was posted successfully", Snackbar.LENGTH_SHORT).show()
+                        mapsViewModel.onUserRankedStation()
+                    }
+                }
+            }
+        }
+
+        chargingStationViewModel.stationStatusUpdated.observe(viewLifecycleOwner) { isStatusUpdated ->
             binding?.apply {
-                if(isRatingPosted) {
-                    Snackbar.make(root, "Rating was posted successfully", Snackbar.LENGTH_SHORT).show()
+                if(isStatusUpdated) {
+//                    Snackbar.make(root, "Rating was posted successfully", Snackbar.LENGTH_SHORT).show()
+                    mapsViewModel.onUserUpdatedStationStatus()
                 }
             }
         }

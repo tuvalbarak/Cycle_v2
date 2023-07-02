@@ -12,7 +12,10 @@ import com.tdp.cycle.models.cycle_server.Battery
 import com.tdp.cycle.models.cycle_server.ChargingStation
 import com.tdp.cycle.models.cycle_server.ElectricVehicle
 import com.tdp.cycle.models.cycle_server.User
+import com.tdp.cycle.models.cycle_server.UserRequest
 import com.tdp.cycle.models.responses.*
+import com.tdp.cycle.remote.networking.LocalResponseError
+import com.tdp.cycle.remote.networking.LocalResponseSuccess
 import com.tdp.cycle.remote.networking.RemoteResponseError
 import com.tdp.cycle.remote.networking.RemoteResponseSuccess
 import com.tdp.cycle.remote.networking.getErrorMsgByType
@@ -56,6 +59,7 @@ class MapsViewModel @Inject constructor(
     val isObdAvailable = SingleLiveEvent<Boolean>()
     val routeEtaAndChargingEtaEvent = MutableLiveData<Pair<String?, String?>>()
     val optimizingRouteEvent = MutableLiveData<Pair<Boolean, ChargingStation?>>()
+    val gamificationEvent = SingleLiveEvent<String>()
     private var isInRoute = false
     private var originLocation: LatLng? = null
     private var origin: String = ""
@@ -210,7 +214,7 @@ class MapsViewModel @Inject constructor(
     private fun pollChargingStationStatus() {
         safeViewModelScopeIO {
             while (true) {
-                delay(10000)
+                delay(25000)
                 if (isInRoute) {
                     bestStation.value?.id?.let { stationId ->
                         when(val response = chargingStationsRepository.getChargingStationById(stationId)) {
@@ -872,8 +876,65 @@ class MapsViewModel @Inject constructor(
     )
 
 //    fun getRouteUntilChargingStationColor() = Color.argb(179,204,174,1)
-    fun getRouteUntilChargingStationColor() = Color.parseColor("#a4ffa4")
-    fun getRouteAfterChargingStationColor() =  Color.parseColor("#91d2ff")
+
+    fun onUserRankedStation() {
+        safeViewModelScopeIO {
+            val awardedPoints = 250
+            when (val response = userRepository.postGamification(awardedPoints, "Station ranking")) {
+                is RemoteResponseSuccess -> {
+                    user.postValue(response.data)
+                    val message = "Congratulations, you've gained $awardedPoints points!"
+                    gamificationEvent.postRawValue(message)
+                }
+                is LocalResponseError -> errorEvent.postRawValue(response.error.toString())
+                is RemoteResponseError -> { }
+                is LocalResponseSuccess -> { }
+                null -> { }
+            }
+        }
+    }
+
+    fun onUserCommented() {
+        safeViewModelScopeIO {
+            val awardedPoints = 300
+            when (val response = userRepository.postGamification(awardedPoints, "Station comment")) {
+                is RemoteResponseSuccess -> {
+                    user.postValue(response.data)
+                    val message = "Congratulations, you've gained $awardedPoints points!"
+                    gamificationEvent.postRawValue(message)
+                }
+                is LocalResponseError -> errorEvent.postRawValue(response.error.toString())
+                is RemoteResponseError -> { }
+                is LocalResponseSuccess -> { }
+                null -> { }
+            }
+        }
+    }
+
+    fun onUserUpdatedStationStatus() {
+        safeViewModelScopeIO {
+            val awardedPoints = 200
+            when (val response = userRepository.postGamification(awardedPoints, "Station status update")) {
+                is RemoteResponseSuccess -> {
+                    user.postValue(response.data)
+                    val message = "Congratulations, you've gained $awardedPoints points!"
+                    gamificationEvent.postRawValue(message)
+                }
+                is LocalResponseError -> errorEvent.postRawValue(response.error.toString())
+                is RemoteResponseError -> errorEvent.postRawValue(response.error.toString())
+                is LocalResponseSuccess -> { }
+                null -> { }
+            }
+            val message = "Congratulations, you've gained $awardedPoints!"
+            gamificationEvent.postRawValue(message)
+        }
+    }
+
+//    fun getRouteUntilChargingStationColor() = Color.parseColor("#a4ffa4")
+    fun getRouteUntilChargingStationColor() = Color.parseColor("#74a8cc")
+//    fun getRouteAfterChargingStationColor() =  Color.parseColor("#91d2ff")
+    fun getRouteAfterChargingStationColor() =  Color.parseColor("#83cc83")
+//    fun getRouteAfterChargingStationColor() =  Color.parseColor("#3a5466")
 
 
     companion object {

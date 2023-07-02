@@ -108,27 +108,27 @@
         app:cardElevation="8dp"
         app:cardCornerRadius="50dp">
 
-<!--        <LinearLayout-->
-<!--            android:layout_width="60dp"-->
-<!--            android:layout_height="60dp"-->
-<!--            android:background="@drawable/speed_background"-->
-<!--            android:gravity="center"-->
-<!--            android:orientation="vertical">-->
+        <LinearLayout
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="@drawable/speed_background"
+            android:gravity="center"
+            android:orientation="vertical">
 
-<!--            <TextView-->
-<!--                android:id="@+id/routesFragmentKmhValue"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                tools:text="500"-->
-<!--                android:textColor="@color/primary_blue"/>-->
+            <TextView
+                android:id="@+id/routesFragmentKmhValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="500"
+                android:textColor="@color/primary_blue"/>
 
-<!--            <TextView-->
-<!--                android:id="@+id/routesFragmentKmhTitle"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                tools:text="km/h" />-->
+            <TextView
+                android:id="@+id/routesFragmentKmhTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Points" />
 
-<!--        </LinearLayout>-->
+        </LinearLayout>
 
     </androidx.cardview.widget.CardView>
 

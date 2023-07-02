@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -62,7 +63,7 @@ import kotlin.math.roundToInt
 @AndroidEntryPoint
 class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBinding::inflate), OnMapReadyCallback {
 
-    private val mapsViewModel: MapsViewModel by viewModels()
+    private val mapsViewModel: MapsViewModel by activityViewModels()
 
     private var googleMap: GoogleMap? = null
     private var currentLocationString: String? = null
@@ -121,20 +122,20 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
     }
 
-    private fun startObdCommunication() {
-        (activity as? MainActivity)?.apply {
-            obdSocket?.let { socket ->
-                viewLifecycleOwner.lifecycleScope.launch {
-                    if (socket.isConnected) {
-                        obdCommunicationFragment(socket)
-                    } else {
-                        connectObdSocket(socket)
-                        obdCommunicationFragment(socket)
-                    }
-                }
-            }
-        }
-    }
+//    private fun startObdCommunication() {
+//        (activity as? MainActivity)?.apply {
+//            obdSocket?.let { socket ->
+//                viewLifecycleOwner.lifecycleScope.launch {
+//                    if (socket.isConnected) {
+//                        obdCommunicationFragment(socket)
+//                    } else {
+//                        connectObdSocket(socket)
+//                        obdCommunicationFragment(socket)
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     suspend fun obdCommunicationFragment(bluetoothSocket: BluetoothSocket?) {
@@ -252,7 +253,6 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
     private fun initUi() {
         binding?.apply {
-
             routesSearchEditText.setOnFocusChangeListener { view, isFocused ->
                 if (isFocused) {
                     intentAddress()
@@ -271,7 +271,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 //                    destination = routesSearchEditText.text.toString()
 //                )
 //
-                startObdCommunication()
+//                startObdCommunication()
 //            }
             initBatteryGraph()
         }
@@ -328,7 +328,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
 
         mapsViewModel.currentUserLocation.observe(viewLifecycleOwner) {
-            handleCurrentLocation(true)
+            handleCurrentLocation(false)
         }
 
         mapsViewModel.progressData.observe(viewLifecycleOwner) { isLoading ->
@@ -344,6 +344,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
             binding?.routesUserName?.text = user?.let {
                 "${user.name?.split(" ")?.firstOrNull()}"
             } ?: ""
+            binding?.routesFragmentKmhValue?.text = user?.crystalsBalance?.toString()
         }
 
         mapsViewModel.batteryPercentage.observe(viewLifecycleOwner) { batteryPercentage ->
@@ -402,6 +403,16 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
                 }
             }
         }
+
+        mapsViewModel.gamificationEvent.observe(viewLifecycleOwner) { event ->
+            event?.getContentIfNotHandled()?.let { message ->
+                binding?.apply {
+//                    Snackbar.make(root, message, Snackbar.LENGTH_LONG).show()
+//                    routesFragmentKmhValue.text = mapsViewModel.user.value?.crystalsBalance?.toString()
+                }
+            }
+        }
+
     }
 
     private fun markChargingStations(chargingStations: List<ChargingStation?>?) {
@@ -497,13 +508,13 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
         val polylineUntilChargingStop = PolylineOptions()
             .addAll(PolyUtil.decode(routes.first?.overviewPolyline?.points))
-            .width(20f)
+            .width(18f)
             .color(mapsViewModel.getRouteUntilChargingStationColor())
 
         routes.second?.let {
             val polylineAfterChargingStop = PolylineOptions()
                 .addAll(PolyUtil.decode(routes.second?.overviewPolyline?.points))
-                .width(20f)
+                .width(18f)
                 .color(mapsViewModel.getRouteAfterChargingStationColor())
 
             mapsPolyline = Pair(

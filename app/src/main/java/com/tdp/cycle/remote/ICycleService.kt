@@ -92,4 +92,10 @@ interface ICycleService {
         @Body userRequest: UserRequest
     ) : ServerResponse<User>
 
+    @POST("users/{userId}/gamification")
+    suspend fun postGamification(
+        @Path(value = "userId") userId: Long,
+        @Body gamificationRequest: GamificationRequest
+    ): ServerResponse<User>
+
 }

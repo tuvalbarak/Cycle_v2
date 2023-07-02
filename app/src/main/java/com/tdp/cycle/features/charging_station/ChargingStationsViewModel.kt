@@ -2,6 +2,7 @@ package com.tdp.cycle.features.charging_station
 
 import androidx.lifecycle.MutableLiveData
 import com.tdp.cycle.bases.CycleBaseViewModel
+import com.tdp.cycle.common.SingleLiveEvent
 import com.tdp.cycle.models.cycle_server.ChargingStation
 import com.tdp.cycle.models.cycle_server.ChargingStationStatus
 import com.tdp.cycle.models.cycle_server.Comment
@@ -25,8 +26,9 @@ class ChargingStationsViewModel @Inject constructor(
 ) : CycleBaseViewModel() {
 
     val chargingStation = MutableLiveData<ChargingStation?>()
-    val commentPosted = MutableLiveData<Boolean>()
-    val ratingPosted = MutableLiveData<Boolean>()
+    val commentPosted = SingleLiveEvent<Boolean>()
+    val ratingPosted = SingleLiveEvent<Boolean>()
+    val stationStatusUpdated = MutableLiveData<Boolean>()
 
     fun updateChargingStation(chargingStation: ChargingStation?) {
         safeViewModelScopeIO {
@@ -47,7 +49,7 @@ class ChargingStationsViewModel @Inject constructor(
             chargingStation.value?.id?.let {
                 when(val response = chargingStationsRepository.postComment(it, commentRequest)) {
                     is RemoteResponseSuccess -> {
-                        commentPosted.postValue(true)
+                        commentPosted.postRawValue(true)
                         chargingStation.postValue(response.data)
                     }
                     is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
@@ -65,7 +67,7 @@ class ChargingStationsViewModel @Inject constructor(
             chargingStation.value?.id?.let {
                 when(val response = chargingStationsRepository.postRating(it, rating)) {
                     is RemoteResponseSuccess -> {
-                        ratingPosted.postValue(true)
+                        ratingPosted.postRawValue(true)
                         chargingStation.postValue(response.data)
                     }
                     is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
@@ -83,6 +85,7 @@ class ChargingStationsViewModel @Inject constructor(
                 when(val response = chargingStationsRepository.updateStatus(it, status)) {
                     is RemoteResponseSuccess -> {
                         chargingStation.postValue(response.data)
+                        stationStatusUpdated.postValue(true)
                     }
                     is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
                     else -> { }

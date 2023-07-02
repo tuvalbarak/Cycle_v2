@@ -3,6 +3,7 @@ package com.tdp.cycle.repositories
 import android.content.SharedPreferences
 import com.tdp.cycle.common.DriverPreferencesConsts
 import com.tdp.cycle.common.isNull
+import com.tdp.cycle.models.cycle_server.GamificationRequest
 import com.tdp.cycle.models.cycle_server.User
 import com.tdp.cycle.models.cycle_server.UserPreferance
 import com.tdp.cycle.models.cycle_server.UserRequest
@@ -43,6 +44,15 @@ class UserRepository(
             currentUserResponse = fetchUserMe()
         }
         return currentUserResponse
+    }
+
+    suspend fun postGamification(amount: Int, description: String): ResponseResult<User> {
+        return remoteResponseHandler.safeApiCall {
+            cycleService.postGamification(
+                userId = currentUser?.id ?: 0,
+                gamificationRequest = GamificationRequest(amount, description)
+            )
+        }
     }
 
     private suspend fun fetchUserMe(): ResponseResult<User> {
