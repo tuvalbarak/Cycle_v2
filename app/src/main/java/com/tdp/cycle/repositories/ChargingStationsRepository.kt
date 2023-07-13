@@ -37,7 +37,13 @@ class ChargingStationsRepository(
         }
 
     suspend fun getChargingStations() = remoteResponseHandler.safeApiCall {
-        cycleService.getChargingStations()
+        val allStations = cycleService.getChargingStations()
+        allStations.data?.filter {
+            it.condition != "Available"
+        }?.forEach {
+            Log.d("zzzzz", it.id.toString())
+        }
+        allStations
     }
 
     suspend fun getChargingStationById(stationId: Long) = remoteResponseHandler.safeApiCall {

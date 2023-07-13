@@ -82,9 +82,7 @@ class ProfileFragment: CycleBaseFragment<FragmentProfileBinding>(FragmentProfile
             }
 
             profileLogout.setOnClickListener {
-                //Do we need this line?
-//                Identity.getSignInClient(requireActivity()).signOut()
-                profileViewModel.logout()
+//                profileViewModel.logout()
             }
         }
     }

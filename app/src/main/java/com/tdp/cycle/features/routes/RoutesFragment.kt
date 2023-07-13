@@ -66,7 +66,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private val mapsViewModel: MapsViewModel by activityViewModels()
 
     private var googleMap: GoogleMap? = null
-    private var currentLocationString: String? = null
+    private var currentLocationString: String = "Ana Frank 12, Ramat-Gan"
     private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStation?>>()
     private var myMarker: Marker? = null
     private var mapsPolyline: Pair<Polyline?, Polyline?> = Pair(null, null)
@@ -279,7 +279,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
     private fun onAutoCompleteFinished(address: String) {
         mapsViewModel.getDirections(
-            origin = currentLocationString ?: "Ana Frank 14, Ramat-Gan",
+            origin = currentLocationString,
             destination = address
         )
     }
@@ -306,7 +306,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
 
         mapsViewModel.geocode.observe(viewLifecycleOwner) { mapsGeocodeResults ->
-            currentLocationString = mapsGeocodeResults?.firstOrNull()?.formattedAddress
+//            currentLocationString = mapsGeocodeResults?.firstOrNull()?.formattedAddress
         }
 
         mapsViewModel.chargingStations.observe(viewLifecycleOwner) { chargingStations ->
@@ -459,39 +459,89 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     }
 
     private fun handleCurrentLocation(shouldMoveCamera: Boolean) {
-         LocationServices.getFusedLocationProviderClient(requireActivity())
-             .lastLocation
-             .addOnCompleteListener(requireActivity()) { task ->
-            if (task.isSuccessful) {
-                // Set the map's camera position to the current location of the device.
-                task.result?.let { result ->
-                    LatLng(result.latitude, result.longitude).let { location ->
-                        mapsViewModel.saveOriginLocation(location)
-                        //Getting address from latlng value
-                        mapsViewModel.getGeocode(location)
-
-                        //Getting current weather data
-                        mapsViewModel.getWeather(location.toLocation())
-
-                        if(shouldMoveCamera) {
-                            //Updating camera location
-                            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,16f))
-                        }
-                        //Adding a marker at the location (and removing previous one)
-                        myMarker?.remove()
-                        myMarker = googleMap?.addMarker(
-                            MarkerOptions().position(location).title("Current location").icon(
-                                BitmapDescriptorFactory.fromResource(R.drawable.ic_car)
-                            )
-                        )
-                    }
-                }
-            } else {
-                Log.d(TAG, "Current location is null. Using defaults.")
-                Log.e(TAG, "Exception: %s", task.exception)
-            }
+        val shenkarLatLng = LatLng(32.0912486, 34.8022068)
+        mapsViewModel.saveOriginLocation(shenkarLatLng)
+        mapsViewModel.getWeather(shenkarLatLng.toLocation())
+        if(shouldMoveCamera) {
+            //Updating camera location
+            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(shenkarLatLng ,16f))
         }
+        //Adding a marker at the location (and removing previous one)
+        myMarker?.remove()
+        myMarker = googleMap?.addMarker(
+            MarkerOptions().position(shenkarLatLng).title("Current location").icon(
+                BitmapDescriptorFactory.fromResource(R.drawable.ic_car)
+            )
+        )
+
+//        LocationServices.getFusedLocationProviderClient(requireActivity())
+//            .lastLocation
+//            .addOnCompleteListener(requireActivity()) { task ->
+//                if (task.isSuccessful) {
+//                    // Set the map's camera position to the current location of the device.
+//                    task.result?.let { result ->
+//                        LatLng(result.latitude, result.longitude).let { location ->
+//                            mapsViewModel.saveOriginLocation(location)
+//                            //Getting address from latlng value
+//                            mapsViewModel.getGeocode(location)
+//
+//                            //Getting current weather data
+//                            mapsViewModel.getWeather(location.toLocation())
+//
+//                            if(shouldMoveCamera) {
+//                                //Updating camera location
+//                                googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,16f))
+//                            }
+//                            //Adding a marker at the location (and removing previous one)
+//                            myMarker?.remove()
+//                            myMarker = googleMap?.addMarker(
+//                                MarkerOptions().position(location).title("Current location").icon(
+//                                    BitmapDescriptorFactory.fromResource(R.drawable.ic_car)
+//                                )
+//                            )
+//                        }
+//                    }
+//                } else {
+//                    Log.d(TAG, "Current location is null. Using defaults.")
+//                    Log.e(TAG, "Exception: %s", task.exception)
+//                }
+//            }
     }
+
+//    private fun handleCurrentLocation(shouldMoveCamera: Boolean) {
+//         LocationServices.getFusedLocationProviderClient(requireActivity())
+//             .lastLocation
+//             .addOnCompleteListener(requireActivity()) { task ->
+//            if (task.isSuccessful) {
+//                // Set the map's camera position to the current location of the device.
+//                task.result?.let { result ->
+//                    LatLng(result.latitude, result.longitude).let { location ->
+//                        mapsViewModel.saveOriginLocation(location)
+//                        //Getting address from latlng value
+//                        mapsViewModel.getGeocode(location)
+//
+//                        //Getting current weather data
+//                        mapsViewModel.getWeather(location.toLocation())
+//
+//                        if(shouldMoveCamera) {
+//                            //Updating camera location
+//                            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,16f))
+//                        }
+//                        //Adding a marker at the location (and removing previous one)
+//                        myMarker?.remove()
+//                        myMarker = googleMap?.addMarker(
+//                            MarkerOptions().position(location).title("Current location").icon(
+//                                BitmapDescriptorFactory.fromResource(R.drawable.ic_car)
+//                            )
+//                        )
+//                    }
+//                }
+//            } else {
+//                Log.d(TAG, "Current location is null. Using defaults.")
+//                Log.e(TAG, "Exception: %s", task.exception)
+//            }
+//        }
+//    }
 
     private fun removePrevRouteIfExisted(chargingStation: ChargingStation?) {
         mapsPolyline.let { polyline ->
@@ -508,13 +558,13 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
         val polylineUntilChargingStop = PolylineOptions()
             .addAll(PolyUtil.decode(routes.first?.overviewPolyline?.points))
-            .width(18f)
+            .width(12f)
             .color(mapsViewModel.getRouteUntilChargingStationColor())
 
         routes.second?.let {
             val polylineAfterChargingStop = PolylineOptions()
                 .addAll(PolyUtil.decode(routes.second?.overviewPolyline?.points))
-                .width(18f)
+                .width(12f)
                 .color(mapsViewModel.getRouteAfterChargingStationColor())
 
             mapsPolyline = Pair(

@@ -91,7 +91,7 @@ class LoginFragment : CycleBaseFragment<FragmentLoginBinding>(FragmentLoginBindi
 
             //Sign in with Email
             loginFragmentCTA.setOnClickListener {
-
+                loginViewModel.loginWithEmail(editText.text.toString())
             }
         }
     }

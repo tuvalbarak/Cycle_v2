@@ -32,8 +32,26 @@ class LoginViewModel @Inject constructor(
             )
             when(authRepository.auth(authRequest)) {
                 is RemoteResponseSuccess -> navigationEvent.postRawValue(NavigationEvent.GO_TO_HOME)
-                is RemoteResponseError -> TODO()
+                is RemoteResponseError -> { }
                 else -> { }
+            }
+            progressData.endProgress()
+        }
+    }
+
+    fun loginWithEmail(email: String) {
+        safeViewModelScopeIO {
+            progressData.startProgress()
+            val authRequest = AuthRequest(
+                google_id = System.currentTimeMillis().toString(),
+                email = email,
+                name = "Cycle",
+                phone = "asdasd"
+            )
+            when(authRepository.auth(authRequest)) {
+                is RemoteResponseSuccess -> navigationEvent.postRawValue(NavigationEvent.GO_TO_HOME)
+                is RemoteResponseError -> {}
+                else -> {}
             }
             progressData.endProgress()
         }
