@@ -1,29 +1,27 @@
 package com.tdp.cycle.features.profile.my_vehicles
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.tdp.cycle.bases.CycleBaseFragment
+import com.tdp.cycle.common.customviews.CustomEmptyState
+import com.tdp.cycle.common.gone
 import com.tdp.cycle.common.safeNavigate
+import com.tdp.cycle.common.show
 import com.tdp.cycle.databinding.FragmentMyVehiclesBinding
-import com.tdp.cycle.features.splash.SplashFragmentDirections
-import com.tdp.cycle.models.ElectricVehicleModel
 import com.tdp.cycle.models.cycle_server.ElectricVehicle
-import com.tdp.cycle.models.cycle_server.VehicleMeta
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MyVehiclesFragment : CycleBaseFragment<FragmentMyVehiclesBinding>(FragmentMyVehiclesBinding::inflate) {
+class MyVehiclesFragment :
+    CycleBaseFragment<FragmentMyVehiclesBinding>(FragmentMyVehiclesBinding::inflate),
+    CustomEmptyState.ButtonsClickListener
+{
 
-    private var myVehiclesAdapter: AddVehiclesAdapter? = null
+    private var myVehiclesAdapter: MyVehiclesAdapter? = null
     private val myVehiclesViewModel: MyVehiclesViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -38,14 +36,16 @@ class MyVehiclesFragment : CycleBaseFragment<FragmentMyVehiclesBinding>(Fragment
             myVehiclesFab.setOnClickListener {
                 myVehiclesViewModel.onFabClicked()
             }
+
+            myVehiclesEmptyState.setButtonsListener(this@MyVehiclesFragment)
         }
     }
 
     private fun initAdapter() {
-        val onMyVehicleSelected: ((VehicleMeta) -> Unit) = { ev ->
+        val onMyVehicleSelected: ((ElectricVehicle) -> Unit) = { ev ->
             myVehiclesViewModel.onMyVehicleSelected(ev)
         }
-        myVehiclesAdapter = AddVehiclesAdapter(onMyVehicleSelected, context)
+        myVehiclesAdapter = MyVehiclesAdapter(onMyVehicleSelected, context)
         binding?.apply {
             myVehiclesRV.layoutManager = LinearLayoutManager(context)
             myVehiclesRV.adapter = myVehiclesAdapter
@@ -53,8 +53,19 @@ class MyVehiclesFragment : CycleBaseFragment<FragmentMyVehiclesBinding>(Fragment
     }
 
     private fun initObservers() {
-        myVehiclesViewModel.myVehicles.observe(viewLifecycleOwner) { evs ->
-            myVehiclesAdapter?.submitList(evs?.sortedByDescending { (it?.isSelected) })
+        myVehiclesViewModel.myElectricVehicles.observe(viewLifecycleOwner) { evs ->
+            binding?.apply {
+                if(evs.isNullOrEmpty()) {
+                    myVehiclesEmptyState.show()
+                    myVehiclesFab.gone()
+                    myVehiclesRV.gone()
+                } else {
+                    myVehiclesEmptyState.gone()
+                    myVehiclesFab.show()
+                    myVehiclesRV.show()
+                    myVehiclesAdapter?.submitList(evs?.sortedByDescending { (it?.isSelected) })
+                }
+            }
         }
 
         myVehiclesViewModel.navigationEvent.observe(viewLifecycleOwner) { event ->
@@ -73,4 +84,11 @@ class MyVehiclesFragment : CycleBaseFragment<FragmentMyVehiclesBinding>(Fragment
         }
     }
 
+    companion object {
+        private const val TAG = "MyVehiclesFragmentTAG"
+    }
+
+    override fun firstButtonClick() {
+        myVehiclesViewModel.onFabClicked()
+    }
 }

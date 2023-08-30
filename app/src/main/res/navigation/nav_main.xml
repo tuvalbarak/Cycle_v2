@@ -27,6 +27,42 @@
         android:label="routesFragment"
         tools:layout="@layout/fragment_routes">
 
+        <action
+            android:id="@+id/action_routesFragment_to_chargingStationFragment"
+            app:destination="@+id/chargingStationFragment" >
+
+            <argument
+                android:name="charging_station"
+                android:defaultValue="@null"
+                app:argType="com.tdp.cycle.models.cycle_server.ChargingStation"
+                app:nullable="true" />
+
+        </action>
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.tdp.cycle.features.chat.ChatFragment"
+        android:label="chatFragment"
+        tools:layout="@layout/fragment_chat">
+
+    </fragment>
+
+
+
+    <fragment
+        android:id="@+id/chargingStationFragment"
+        android:name="com.tdp.cycle.features.charging_station.ChargingStationFragment"
+        android:label="chargingStationFragment"
+        tools:layout="@layout/fragment_charging_station">
+
+        <argument
+            android:name="charging_station"
+            android:defaultValue="@null"
+            app:argType="com.tdp.cycle.models.cycle_server.ChargingStation"
+            app:nullable="true" />
+
     </fragment>
 
     <fragment
@@ -107,6 +143,10 @@
         android:label="myChargingStationsFragment"
         tools:layout="@layout/fragment_my_charging_stations">
 
+        <action
+            android:id="@+id/action_myChargingStationFragment_to_createChargingStationFragment"
+            app:destination="@+id/createChargingStationsFragment" />
+
     </fragment>
 
     <fragment
@@ -122,6 +162,14 @@
         android:name="com.tdp.cycle.features.profile.my_vehicles.AddVehicleFragment"
         android:label="addVehicleFragment"
         tools:layout="@layout/fragment_add_vehicle">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/createChargingStationsFragment"
+        android:name="com.tdp.cycle.features.profile.my_charging_stations.CreateChargingStationFragment"
+        android:label="createChargingStationsFragment"
+        tools:layout="@layout/fragment_create_charging_station">
 
     </fragment>
 

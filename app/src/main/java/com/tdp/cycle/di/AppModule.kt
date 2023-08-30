@@ -6,9 +6,12 @@ import androidx.room.Room
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.tdp.cycle.local.CycleDB
+import com.tdp.cycle.remote.networking.ApiSettings
+import com.tdp.cycle.remote.networking.AuthInterceptor
 import com.tdp.cycle.remote.ICycleService
 import com.tdp.cycle.remote.IMapsService
 import com.tdp.cycle.remote.IWeatherService
+import com.tdp.cycle.remote.networking.RemoteResponseHandler
 import com.tdp.cycle.repositories.*
 import dagger.Module
 import dagger.Provides
@@ -67,18 +70,22 @@ class AppModule {
 
     @Singleton
     @Provides
-    fun provideDefaultOkhttpClient(): OkHttpClient {
+    fun provideApiSettings(sharedPreferences: SharedPreferences): ApiSettings = ApiSettings(sharedPreferences)
+
+    @Singleton
+    @Provides
+    fun provideDefaultOkhttpClient(apiSettings: ApiSettings, sharedPreferences: SharedPreferences): OkHttpClient {
         val logging = HttpLoggingInterceptor()
         logging.level = HttpLoggingInterceptor.Level.BODY
 
-//        val authInterceptor = AuthInterceptor(apiSettings, sharedPreferences, tokenApi)
+        val authInterceptor = AuthInterceptor(apiSettings, sharedPreferences)
 
         val httpClient = OkHttpClient.Builder()
             .connectTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
             .writeTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
             .readTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
             .addInterceptor(logging)
-//            .addInterceptor(authInterceptor)
+            .addInterceptor(authInterceptor)
         return httpClient.build()
     }
 
@@ -92,20 +99,37 @@ class AppModule {
 
     @Singleton
     @Provides
-    fun provideCycleRepository(cycleService: ICycleService): CycleRepository = CycleRepository(cycleService)
+    fun provideUserRepository(
+        cycleService: ICycleService,
+        remoteResponseHandler: RemoteResponseHandler,
+        sharedPreferences: SharedPreferences
+    ): UserRepository = UserRepository(cycleService, remoteResponseHandler, sharedPreferences)
 
     @Singleton
     @Provides
-    fun provideUserRepository(db: CycleDB, sharedPreferences: SharedPreferences, cycleService: ICycleService): UserRepository =
-        UserRepository(db, sharedPreferences, cycleService)
+    fun provideAuthRepository(
+        cycleService: ICycleService,
+        sharedPreferences: SharedPreferences,
+        remoteResponseHandler: RemoteResponseHandler
+    ): AuthRepository = AuthRepository(cycleService, sharedPreferences, remoteResponseHandler)
 
     @Singleton
     @Provides
-    fun provideChargingStationsRepository(): ChargingStationsRepository = ChargingStationsRepository()
+    fun provideChargingStationsRepository(
+        cycleService: ICycleService,
+        remoteResponseHandler: RemoteResponseHandler
+    ): ChargingStationsRepository = ChargingStationsRepository(cycleService, remoteResponseHandler)
 
     @Singleton
     @Provides
-    fun provideElectricVehiclesRepository(): ElectricVehiclesRepository = ElectricVehiclesRepository()
+    fun provideVehiclesRepository(
+        cycleService: ICycleService,
+        remoteResponseHandler: RemoteResponseHandler
+    ): VehiclesRepository = VehiclesRepository(cycleService, remoteResponseHandler)
+
+    @Singleton
+    @Provides
+    fun provideRemoteHandler(): RemoteResponseHandler = RemoteResponseHandler()
 
     @Singleton
     @Provides

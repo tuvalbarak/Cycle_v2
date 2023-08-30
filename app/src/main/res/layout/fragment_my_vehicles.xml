@@ -39,4 +39,20 @@
         android:backgroundTint="@color/primary_blue"
         style="@style/Widget.MaterialComponents.FloatingActionButton" />
 
+    <com.tdp.cycle.common.customviews.CustomEmptyState
+        android:id="@+id/myVehiclesEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:FirstButtonTextCustom="Add a vehicle"
+        app:FirstButtonState="true"
+        app:SecondButtonState="false"
+        app:TitleCustom="It seems that you don't have any vehicles yet"
+        app:TextCustom="You can choose one of our options..."
+        app:BackgroundCustom="@drawable/empty_state_ny_vehicles"
+        android:visibility="gone" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

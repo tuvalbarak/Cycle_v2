@@ -1,28 +1,30 @@
 package com.tdp.cycle.features.profile.my_vehicles
 
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
 import com.tdp.cycle.bases.CycleBaseViewModel
 import com.tdp.cycle.common.SingleLiveEvent
+import com.tdp.cycle.models.cycle_server.ElectricVehicle
 import com.tdp.cycle.models.cycle_server.ElectricVehicleRequest
+import com.tdp.cycle.models.cycle_server.UserRequest
 import com.tdp.cycle.models.cycle_server.VehicleMeta
-import com.tdp.cycle.repositories.CycleRepository
-import com.tdp.cycle.repositories.ElectricVehiclesRepository
+import com.tdp.cycle.remote.networking.LocalResponseError
+import com.tdp.cycle.remote.networking.LocalResponseSuccess
+import com.tdp.cycle.remote.networking.RemoteResponseError
+import com.tdp.cycle.remote.networking.RemoteResponseSuccess
+import com.tdp.cycle.remote.networking.getErrorMsgByType
 import com.tdp.cycle.repositories.UserRepository
+import com.tdp.cycle.repositories.VehiclesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MyVehiclesViewModel @Inject constructor(
-    private val electricVehiclesRepository: ElectricVehiclesRepository,
-    private val cycleRepository: CycleRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val vehiclesRepository: VehiclesRepository
 ) : CycleBaseViewModel() {
 
-    val myVehicles = MutableLiveData<List<VehicleMeta?>?>()
-    val addVehicles = MutableLiveData<List<VehicleMeta?>?>()
+    val myElectricVehicles = MutableLiveData<List<ElectricVehicle?>?>()
+    val metaVehicles = MutableLiveData<List<VehicleMeta?>?>()
     val navigationEvent = SingleLiveEvent<NavigationEvent>()
 
     enum class NavigationEvent {
@@ -31,120 +33,140 @@ class MyVehiclesViewModel @Inject constructor(
     }
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
+        safeViewModelScopeIO {
             progressData.startProgress()
             getMyEvs()
-            getAddEVs()
+            getMetaVehicles()
             progressData.endProgress()
         }
     }
 
-    private fun getMyEvs() {
-        safeViewModelScopeIO {
-            val myMetaVehiclesList = mutableListOf<VehicleMeta?>()
-            cycleRepository.getElectricVehicles()?.forEach { myElectricVehicles ->
-                myElectricVehicles?.vehicleMetaId?.let {
-                    myMetaVehiclesList.add(cycleRepository.getVehicleById(it).data)
-                }
-            }
-
-            //find last selected ev
-            val lastSelectedMyEv = userRepository.getLastSelectedEV()
-            myMetaVehiclesList.find { it?.id == lastSelectedMyEv?.id }?.isSelected = true
-
-            myVehicles.postValue(myMetaVehiclesList)
-        }
-    }
-
-    private fun getAddEVs() {
-        safeViewModelScopeIO {
-            val addVehiclesList = cycleRepository.getVehiclesMeta()
-            val filteredAddVehicles = mutableListOf<VehicleMeta?>()
-            addVehiclesList?.forEach { meta ->
-                myVehicles.value?.find { it?.id == meta?.id }?.let {
-
+    private suspend fun getMyEvs() {
+        when(val response = vehiclesRepository.getElectricVehicles()) {
+            is RemoteResponseSuccess -> {
+                val vehicles = response.data
+                val user = userRepository.getUserMe() as? RemoteResponseSuccess
+                val userElectricVehicleId = user?.data?.myElectricVehicle
+                vehicles?.find { it.id ==  userElectricVehicleId }?.let {
+                    it.isSelected = true
                 } ?: run {
-                    filteredAddVehicles.add(meta)
+                    vehicles?.firstOrNull()?.isSelected = true
                 }
+                myElectricVehicles.postValue(vehicles)
             }
-
-            addVehicles.postValue(filteredAddVehicles)
+            is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+            else -> { }
         }
     }
 
-    fun onMyVehicleSelected(selectedEV: VehicleMeta) {
+    private suspend fun getMetaVehicles() {
+        when(val response = vehiclesRepository.getVehiclesMeta()) {
+            is RemoteResponseSuccess -> {
+                val metasThatUserDoesntHave = response.data?.filterNot { vehicleMeta ->
+                    myElectricVehicles.value?.find { electricVehicle ->
+                        electricVehicle?.vehicleMeta?.id ==  vehicleMeta.id
+                    }?.let { true } ?: false
+                }
+                metaVehicles.postValue(metasThatUserDoesntHave)
+            }
+            is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+            else -> { }
+        }
+    }
+
+    fun onMyVehicleSelected(electricVehicle: ElectricVehicle) {
         safeViewModelScopeIO {
-
-            val updatedVehiclesList = mutableListOf<VehicleMeta>()
-            myVehicles.value?.forEach {
-                it?.let {
-                    updatedVehiclesList.add(
-                        it.copy(isSelected = (it.id == selectedEV.id))
-                    )
-                }
-            }
-
-            userRepository.updateLastSelectedEV(selectedEV)
-            myVehicles.postValue(updatedVehiclesList)
-        }
-    }
-
-    fun onAddVehicleSelected(newEV: VehicleMeta) {
-        val updatedVehiclesList = mutableListOf<VehicleMeta>()
-        addVehicles.value?.forEach {
-            it?.let {
-                if(it.id == newEV.id) {
-                    updatedVehiclesList.add(it.copy(isSelected =  it.isSelected?.not()))
-                } else {
-                    updatedVehiclesList.add(it.copy())
-                }
-            }
-        }
-
-        addVehicles.postValue(updatedVehiclesList)
-    }
-
-    fun onAddVehiclesClicked() {
-        viewModelScope.launch(Dispatchers.IO) {
-            progressData.startProgress()
-//            electricVehiclesRepository.getAllElectricVehicles()
-            val vehicleMeta = addVehicles.value?.firstOrNull { it?.isSelected == true }
-            vehicleMeta?.let {
-
-                //Need to create new Instance of the meta battery -
-                val metaBattery = cycleRepository.getBatteryById(vehicleMeta.manufactureBatteryId)
-//                val newBattery = cycleRepository.createBattery(
-//                    Battery(
-//                        id = null,
-//                        rangeCapacity = metaBattery?.rangeCapacity,
-//                        batteryCapacity = metaBattery?.batteryCapacity,
-//                        percentage = 100
-//                    )
-//                ).data
-
-                val newVehicle = cycleRepository.createElectricVehicle(
-                    ElectricVehicleRequest(
-                        current_battery_id = metaBattery?.id,
-                        vehicle_meta_id = vehicleMeta.id
-                    )
-                ).data
-
-                userRepository.updateMyVehiclesList(newVehicle)
-                val myMetaVehiclesList = mutableListOf<VehicleMeta?>()
-                cycleRepository.getElectricVehicles()?.forEach { myElectricVehicles ->
-                    myElectricVehicles?.vehicleMetaId?.let {
-                        myMetaVehiclesList.add(cycleRepository.getVehicleById(it).data)
+            val userRequest = UserRequest(
+                my_electric_vehicle = electricVehicle.id
+            )
+            when(val response = userRepository.updateUser(userRequest)) {
+                is RemoteResponseSuccess -> {
+                    val updatedVehiclesList = mutableListOf<ElectricVehicle?>()
+                    myElectricVehicles.value?.forEach {
+                        updatedVehiclesList.add(
+                            it?.copy(
+                                isSelected = (it.id == electricVehicle.id)
+                            )
+                        )
                     }
+                    myElectricVehicles.postValue(updatedVehiclesList)
                 }
-                myVehicles.postValue(myMetaVehiclesList)
-
-
+                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                else -> { }
             }
+        }
+    }
 
-            navigationEvent.postRawValue(NavigationEvent.GO_TO_MY_VEHICLE)
+    fun onMetaVehicleSelected(metaVehicleMeta: VehicleMeta) {
+        val updatedVehiclesList = mutableListOf<VehicleMeta?>()
+        metaVehicles.value?.forEach {
+            updatedVehiclesList.add(
+                it?.copy(
+                    isSelected = (it.id == metaVehicleMeta.id)
+                )
+            )
+        }
+        metaVehicles.postValue(updatedVehiclesList)
+    }
+
+    fun onSaveMetaVehicleClicked() {
+        safeViewModelScopeIO {
+            progressData.startProgress()
+            val user = userRepository.getUserMe() as? RemoteResponseSuccess
+            val selectedVehicleMeta = metaVehicles.value?.find { it?.isSelected == true }
+            val electricVehicleRequest = ElectricVehicleRequest(
+                current_battery_id = selectedVehicleMeta?.manufactureBatteryId,
+                vehicle_meta_id = selectedVehicleMeta?.id,
+                owner_id = user?.data?.id
+            )
+            when(val response = vehiclesRepository.createElectricVehicle(electricVehicleRequest)) {
+                is RemoteResponseSuccess -> {
+//                    userRepository.updateUser(UserRequest(my_electric_vehicle = response.data?.id))
+                    getMyEvs()
+                    getMetaVehicles()
+                    navigationEvent.postRawValue(NavigationEvent.GO_TO_MY_VEHICLE)
+                }
+                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                else -> { }
+            }
             progressData.endProgress()
         }
     }
+
+
+//    fun onAddVehiclesClicked() {
+//        viewModelScope.launch(Dispatchers.IO) {
+//            progressData.startProgress()
+////            electricVehiclesRepository.getAllElectricVehicles()
+//            val vehicleMeta = addVehicles.value?.firstOrNull { it?.isSelected == true }
+//            vehicleMeta?.let {
+//
+//                //Need to create new Instance of the meta battery -
+////                val metaBattery = cycleRepository.getBatteryById(vehicleMeta.manufactureBatteryId)
+////
+////                val newVehicle = cycleRepository.createElectricVehicle(
+////                    ElectricVehicleRequest(
+////                        current_battery_id = metaBattery?.id,
+////                        vehicle_meta_id = vehicleMeta.id
+////                    )
+////                ).data
+////
+////                userRepositoryDepricated.updateMyVehiclesList(newVehicle)
+////                val myMetaVehiclesList = mutableListOf<VehicleMeta?>()
+////                cycleRepository.getElectricVehicles()?.forEach { myElectricVehicles ->
+////                    myElectricVehicles?.vehicleMetaId?.let {
+////                        myMetaVehiclesList.add(cycleRepository.getVehicleById(it).data)
+////                    }
+////                }
+////                myVehicles.postValue(myMetaVehiclesList)
+//
+//
+//            }
+//
+//            navigationEvent.postRawValue(NavigationEvent.GO_TO_MY_VEHICLE)
+//            progressData.endProgress()
+//        }
+//    }
 
     fun onFabClicked() {
         navigationEvent.postRawValue(NavigationEvent.GO_TO_ADD_VEHICLE)

@@ -3,9 +3,10 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id "dagger.hilt.android.plugin"
     id "kotlin-kapt"
+    id "kotlin-parcelize"
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
     id 'com.google.gms.google-services'
-    id 'androidx.navigation.safeargs'
+    id 'androidx.navigation.safeargs.kotlin'
 }
 
 android {
@@ -98,6 +99,9 @@ dependencies {
     // Maps SDK for Android Utility Library KTX Library
     implementation 'com.google.maps.android:maps-utils-ktx:3.0.0'
 
+    // Places SDK
+    implementation 'com.google.android.libraries.places:places:3.1.0'
+
     // Firebase platform
     implementation platform('com.google.firebase:firebase-bom:31.2.2')
     implementation 'com.google.firebase:firebase-analytics-ktx'
@@ -117,5 +121,10 @@ dependencies {
     implementation 'org.apache.commons:commons-math-parent:4.0-beta1'
     implementation 'org.apache.commons:commons-math3:3.6.1'
 
+    // Kolin OBD API
+//    implementation 'com.github.eltonvs:kotlin-obd-api:1.2.0'
+
+    // Java OBD API
+    implementation 'com.github.eltonvs:java-obd-api:0.0.1'
 
 }

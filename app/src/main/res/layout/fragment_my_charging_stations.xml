@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:padding="@dimen/common_screen_padding">
 
     <TextView
@@ -12,6 +13,134 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         style="@style/CycleTitleStyle"
-        android:text="My Charging Stations"/>
+        android:text="My Charging Station"/>
+
+    <com.tdp.cycle.common.customviews.CustomEmptyState
+        android:id="@+id/myChargingStationEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:FirstButtonTextCustom="Create charging station"
+        app:FirstButtonState="true"
+        app:SecondButtonState="false"
+        app:TitleCustom="It seems that you didn't create a charging station yet"
+        app:TextCustom="You can add your private station and share it with others :)"
+        app:BackgroundCustom="@drawable/empty_state_charging_stations"
+        android:visibility="gone"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/myChargingStationLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/myChargingStationsTitle"
+        app:layout_constraintBottom_toTopOf="@id/myChargingStationUpdate"
+        android:layout_marginVertical="@dimen/common_extra_extra_large_margin">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/myChargingStationName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/common_extra_large_margin"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTtitle="Name"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/myChargingStationCity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/common_medium_margin"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTtitle="City"
+                app:layout_constraintTop_toBottomOf="@id/myChargingStationName"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/myChargingStationAddress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/common_medium_margin"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTtitle="Address"
+                app:layout_constraintTop_toBottomOf="@id/myChargingStationCity"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/myChargingStationPrice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/common_medium_margin"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTtitle="Price"
+                app:layout_constraintTop_toBottomOf="@id/myChargingStationAddress"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/myChargingStationPower"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/common_medium_margin"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTtitle="Power"
+                app:layout_constraintTop_toBottomOf="@id/myChargingStationPrice"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <com.tdp.cycle.common.customviews.MTPrimaryEditText
+                android:id="@+id/myChargingStationConnectorType"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/common_medium_margin"
+                app:MTbackgroundSelector="@drawable/primary_et_background_selector"
+                app:MTerrorInput="Invalid"
+                app:MTtitle="Connector type"
+                app:layout_constraintTop_toBottomOf="@id/myChargingStationPower"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <Spinner
+                android:id="@+id/myChargingStationStatusSpinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/myChargingStationConnectorType"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="@dimen/common_extra_extra_large_margin" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <com.tdp.cycle.common.customviews.MTPrimaryButton
+        android:id="@+id/myChargingStationUpdate"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        app:MTtextSize="13"
+        app:MTbackgroundSelector="@drawable/primary_btn_background_selector"
+        app:MTtextColorSelector="@drawable/primary_btn_text_color_selector"
+        app:MTtitle="Update"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

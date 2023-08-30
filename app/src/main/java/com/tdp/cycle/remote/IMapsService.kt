@@ -18,8 +18,14 @@ interface IMapsService {
     ): retrofit2.Response<MapsDirectionsResponse>
 
     @GET("geocode/json")
-    suspend fun getGeocode(
+    suspend fun getGeocodeByLatLng(
         @Query("latlng") latlng: String,
+        @Query("key") key: String
+    ): retrofit2.Response<MapsGeocodeResponse>
+
+    @GET("geocode/json")
+    suspend fun getGeocodeByAddress(
+        @Query("address") address: String,
         @Query("key") key: String
     ): retrofit2.Response<MapsGeocodeResponse>
 

@@ -32,9 +32,7 @@ class AddVehiclesAdapter(
                 itemAddVehiclesImage.setImageDrawable(context?.resources?.getDrawable(R.drawable.ic_car, null))
                 itemAddVehiclesName.text = electricVehicle.brand
                 itemAddVehiclesModel.text = electricVehicle.model
-//
                 itemAddVehiclesContainer.isSelected = electricVehicle.isSelected ?: false
-
                 itemAddVehiclesContainer.setOnClickListener {
                     onMyVehicleSelected.invoke(electricVehicle)
                 }

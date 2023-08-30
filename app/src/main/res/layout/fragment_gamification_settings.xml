@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:padding="@dimen/common_screen_padding">
 
     <TextView
@@ -12,6 +13,33 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         style="@style/CycleTitleStyle"
-        android:text="Gamification Settings"/>
+        android:text="Gamification History"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/gamificationRV"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/gamificationSettingsTitle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginVertical="@dimen/common_large_margin"
+        tools:listitem="@layout/item_gamification"
+        tools:itemCount="5" />
+
+    <com.tdp.cycle.common.customviews.CustomEmptyState
+        android:id="@+id/gamificationEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:FirstButtonState="false"
+        app:SecondButtonState="false"
+        app:TitleCustom="It seems that you didn't earn any points yet"
+        app:TextCustom="Go a head and rate a station!"
+        app:BackgroundCustom="@drawable/empty_state_gamification"
+        android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,6 +2,7 @@ package com.tdp.cycle.features.profile
 
 import android.os.Bundle
 import android.view.View
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.tdp.cycle.bases.CycleBaseFragment
@@ -12,11 +13,10 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class ProfileFragment: CycleBaseFragment<FragmentProfileBinding>(FragmentProfileBinding::inflate) {
 
-    private val profileViewModel: ProfileViewModel by viewModels()
+    private val profileViewModel: ProfileViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         initUi()
         initObservers()
     }
@@ -30,6 +30,7 @@ class ProfileFragment: CycleBaseFragment<FragmentProfileBinding>(FragmentProfile
             binding?.apply {
                 profileFullName.text = user?.name ?: ""
                 profileUserEmail.text = user?.email ?: ""
+                profileCrystalsAmount.text = user?.crystalsBalance.toString()
 //                profileUserImage
             }
         }
@@ -47,6 +48,10 @@ class ProfileFragment: CycleBaseFragment<FragmentProfileBinding>(FragmentProfile
                     ProfileViewModel.NavigationEvent.GO_TO_MY_CHARGING_STATIONS -> ProfileFragmentDirections.actionProfileFragmentToMyChargingStationsFragment()
                     ProfileViewModel.NavigationEvent.GO_TO_GAMIFICATION_SETTINGS -> ProfileFragmentDirections.actionProfileFragmentToGamificationFragment()
                     ProfileViewModel.NavigationEvent.GO_TO_ACCOUNT -> ProfileFragmentDirections.actionProfileFragmentToAccountFragment()
+                    ProfileViewModel.NavigationEvent.POP_BACKSTACK -> {
+                        popBackStack()
+                        return@let
+                    }
                 }
                 findNavController().safeNavigate(action)
             }
@@ -68,7 +73,7 @@ class ProfileFragment: CycleBaseFragment<FragmentProfileBinding>(FragmentProfile
                 profileViewModel.navigateTo(ProfileViewModel.NavigationEvent.GO_TO_MY_CHARGING_STATIONS)
             }
 
-            profileGamificationSettings.setOnClickListener {
+            profileGamificationHistory.setOnClickListener {
                 profileViewModel.navigateTo(ProfileViewModel.NavigationEvent.GO_TO_GAMIFICATION_SETTINGS)
             }
 

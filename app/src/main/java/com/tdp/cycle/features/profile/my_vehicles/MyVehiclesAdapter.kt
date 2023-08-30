@@ -7,9 +7,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.tdp.cycle.R
-import com.tdp.cycle.common.loadImage
 import com.tdp.cycle.databinding.ItemMyVehiclesBinding
-import com.tdp.cycle.models.ElectricVehicleModel
 import com.tdp.cycle.models.cycle_server.ElectricVehicle
 
 class MyVehiclesAdapter(
@@ -30,15 +28,13 @@ class MyVehiclesAdapter(
 
          fun bind(electricVehicle: ElectricVehicle) {
              binding.apply {
-//                 itemMyVehiclesImage.setImageDrawable(context?.resources?.getDrawable(R.drawable.ic_car, null))
-//
-//                 itemMyVehiclesName.text = electricVehicle.brand
-//                 itemMyVehiclesModel.text = electricVehicle.model
-////
-//                 itemMyVehiclesContainer.isSelected = electricVehicle.isSelected ?: false
-//                 itemMyVehiclesContainer.setOnClickListener {
-//                     onMyVehicleSelected.invoke(electricVehicleModel)
-//                 }
+                 itemMyVehiclesImage.setImageDrawable(context?.resources?.getDrawable(R.drawable.ic_car, null))
+                 itemMyVehiclesName.text = electricVehicle.vehicleMeta?.brand
+                 itemMyVehiclesModel.text = electricVehicle.vehicleMeta?.model
+                 itemMyVehiclesContainer.isSelected = electricVehicle.isSelected ?: false
+                 itemMyVehiclesContainer.setOnClickListener {
+                     onMyVehicleSelected.invoke(electricVehicle)
+                 }
              }
         }
     }

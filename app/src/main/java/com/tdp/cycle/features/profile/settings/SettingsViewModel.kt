@@ -1,9 +1,8 @@
 package com.tdp.cycle.features.profile.settings
 
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tdp.cycle.common.DriverPreferencesConsts
+import com.tdp.cycle.bases.CycleBaseViewModel
 import com.tdp.cycle.repositories.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -13,16 +12,18 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val userRepository: UserRepository
-) : ViewModel() {
+) : CycleBaseViewModel() {
 
     val allowPushNotifications = MutableLiveData<Boolean>()
     val allowTollRoads = MutableLiveData<Boolean>()
     val allowMultipleChargingStops = MutableLiveData<Boolean>()
+    val allowPrivateStations = MutableLiveData<Boolean>()
 
     init {
         getArePushNotificationsAllowed()
         getAreMultipleChargingStationsAllowed()
         getAreTollRoadsAllowed()
+        getArePrivateStationsAllowed()
     }
 
     fun updatePushNotificationsInSP(pushNotifications: Boolean) {
@@ -40,21 +41,32 @@ class SettingsViewModel @Inject constructor(
         getAreTollRoadsAllowed()
     }
 
+    fun updateIsPrivateStationsAllowedInSp(isPrivateStationsAllowed: Boolean) {
+        userRepository.updateIsPrivateStationsAllowedInSp(isPrivateStationsAllowed)
+        getArePrivateStationsAllowed()
+    }
+
     private fun getArePushNotificationsAllowed() {
-        viewModelScope.launch(Dispatchers.IO) {
+        safeViewModelScopeIO {
             allowPushNotifications.postValue(userRepository.getArePushNotificationsAllowed())
         }
     }
 
     private fun getAreMultipleChargingStationsAllowed() {
-        viewModelScope.launch(Dispatchers.IO) {
+        safeViewModelScopeIO {
             allowMultipleChargingStops.postValue(userRepository.getAreMultipleChargingStationsAllowed())
         }
     }
 
     private fun getAreTollRoadsAllowed() {
-        viewModelScope.launch(Dispatchers.IO) {
+        safeViewModelScopeIO {
             allowTollRoads.postValue(userRepository.getAreTollRoadsAllowed())
+        }
+    }
+
+    private fun getArePrivateStationsAllowed() {
+        safeViewModelScopeIO {
+            allowPrivateStations.postValue(userRepository.getArePrivateStationsAllowed())
         }
     }
 

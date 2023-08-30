@@ -3,11 +3,15 @@ package com.tdp.cycle.features.profile
 import androidx.lifecycle.MutableLiveData
 import com.tdp.cycle.bases.CycleBaseViewModel
 import com.tdp.cycle.common.SingleLiveEvent
-import com.tdp.cycle.models.User
+import com.tdp.cycle.models.cycle_server.User
+import com.tdp.cycle.models.cycle_server.UserRequest
+import com.tdp.cycle.remote.networking.LocalResponseError
+import com.tdp.cycle.remote.networking.LocalResponseSuccess
+import com.tdp.cycle.remote.networking.RemoteResponseError
+import com.tdp.cycle.remote.networking.RemoteResponseSuccess
+import com.tdp.cycle.remote.networking.getErrorMsgByType
 import com.tdp.cycle.repositories.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,13 +28,18 @@ class ProfileViewModel @Inject constructor(
         GO_TO_MY_CHARGING_STATIONS,
         GO_TO_GAMIFICATION_SETTINGS,
         GO_TO_ACCOUNT,
-        GO_TO_LOGIN
+        GO_TO_LOGIN,
+        POP_BACKSTACK
     }
 
     init {
         safeViewModelScopeIO {
             progressData.startProgress()
-            user.postValue(userRepository.getUser())
+            when(val response = userRepository.getUserMe()) {
+                is RemoteResponseSuccess -> user.postValue(response.data)
+                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                else -> { }
+            }
             progressData.endProgress()
         }
     }
@@ -40,6 +49,21 @@ class ProfileViewModel @Inject constructor(
             progressData.startProgress()
             userRepository.logout()
             navigateTo(NavigationEvent.GO_TO_LOGIN)
+            progressData.endProgress()
+        }
+    }
+
+    fun onSaveButtonClicked(userRequest: UserRequest) {
+        safeViewModelScopeIO {
+            progressData.startProgress()
+            when (val response = userRepository.updateUser(userRequest)) {
+                is RemoteResponseSuccess -> {
+                    user.postValue(response.data)
+//                    navigationEvent.postRawValue(NavigationEvent.POP_BACKSTACK)
+                }
+                is RemoteResponseError -> errorEvent.postRawValue(response.error.getErrorMsgByType())
+                else -> { }
+            }
             progressData.endProgress()
         }
     }

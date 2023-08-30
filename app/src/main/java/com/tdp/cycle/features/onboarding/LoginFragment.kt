@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
@@ -21,14 +22,16 @@ import com.tdp.cycle.R
 import com.tdp.cycle.bases.CycleBaseFragment
 import com.tdp.cycle.common.safeNavigate
 import com.tdp.cycle.databinding.FragmentLoginBinding
+import dagger.hilt.android.AndroidEntryPoint
 
-
+@AndroidEntryPoint
 class LoginFragment : CycleBaseFragment<FragmentLoginBinding>(FragmentLoginBinding::inflate) {
 
     private val REQ_ONE_TAP = 33333333
     private lateinit var auth: FirebaseAuth
     private lateinit var oneTapClient: SignInClient
     private lateinit var signInRequest: BeginSignInRequest
+    private val loginViewModel: LoginViewModel by viewModels()
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -50,7 +53,7 @@ class LoginFragment : CycleBaseFragment<FragmentLoginBinding>(FragmentLoginBindi
                                         val user = auth.currentUser
                                         Log.d(TAG, "user = ${user.toString()}")
                                         //Navigating to home screen
-                                        findNavController().safeNavigate(LoginFragmentDirections.actionLoginFragmentToRoutesFragment())
+                                        loginViewModel.auth(user)
                                     } else {
                                         // If sign in fails, display a message to the user.
                                         Log.d(TAG, "signInWithCredential:failure", task.exception)
@@ -76,6 +79,7 @@ class LoginFragment : CycleBaseFragment<FragmentLoginBinding>(FragmentLoginBindi
         super.onViewCreated(view, savedInstanceState)
         auth = Firebase.auth
         initUi()
+        initObservers()
     }
 
     private fun initUi() {
@@ -89,6 +93,22 @@ class LoginFragment : CycleBaseFragment<FragmentLoginBinding>(FragmentLoginBindi
             loginFragmentCTA.setOnClickListener {
 
             }
+        }
+    }
+
+    private fun initObservers() {
+        loginViewModel.navigationEvent.observe(viewLifecycleOwner) {event ->
+            event?.getContentIfNotHandled()?.let { navigation ->
+                when(navigation) {
+                    LoginViewModel.NavigationEvent.GO_TO_HOME -> {
+                        findNavController().safeNavigate(LoginFragmentDirections.actionLoginFragmentToRoutesFragment())
+                    }
+                }
+            }
+        }
+
+        loginViewModel.progressData.observe(viewLifecycleOwner) { isLoading ->
+            handleProgress(isLoading)
         }
     }
 

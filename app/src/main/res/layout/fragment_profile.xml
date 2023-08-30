@@ -102,7 +102,7 @@
         android:id="@+id/profileMyStations"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="My Charging Stations"
+        android:text="My Charging Station"
         app:layout_constraintTop_toBottomOf="@id/profileMyVehiclesSeparator"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -121,10 +121,10 @@
         android:background="@color/separatorColor" />
 
     <TextView
-        android:id="@+id/profileGamificationSettings"
+        android:id="@+id/profileGamificationHistory"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Gamification Settings"
+        android:text="Gamification History"
         app:layout_constraintTop_toBottomOf="@id/profileChargingStationSeparator"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -136,7 +136,7 @@
         android:id="@+id/profileGamificationSeparator"
         android:layout_width="0dp"
         android:layout_height="1dp"
-        app:layout_constraintTop_toBottomOf="@id/profileGamificationSettings"
+        app:layout_constraintTop_toBottomOf="@id/profileGamificationHistory"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="@dimen/common_large_margin"
@@ -192,7 +192,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@id/profileCrystalsIcon"
         app:layout_constraintStart_toStartOf="@id/profileCrystalsIcon"
-        android:text="20,000"
+        tools:text="20,000"
         style="@style/CycleTitleStyle" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

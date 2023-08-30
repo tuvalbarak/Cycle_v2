@@ -1,7 +1,7 @@
 package com.tdp.cycle.remote
 
-import com.tdp.cycle.models.UserServer
 import com.tdp.cycle.models.cycle_server.*
+import com.tdp.cycle.remote.networking.ServerResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PATCH
@@ -10,62 +10,92 @@ import retrofit2.http.Path
 
 interface ICycleService {
 
-    /** Drivers **/
-    @GET("drivers")
-    suspend fun getDrivers(): ServerResponse<List<Driver?>>
-
-    @GET("drivers/{id}")
-    suspend fun getDriverById(
-        @Path(value = "id") driverId: Long
-    ): ServerResponse<Driver?>
-
-    @POST("drivers")
-    suspend fun createDriver(
-        @Body driver: Driver
-    ): ServerResponse<Driver?>
-
-    @PATCH("drivers/{id}")
-    suspend fun updateDriver(
-        @Path(value = "id") driverId: Long,
-        @Body driver: Driver
-    ): ServerResponse<Driver?>
-
-    /** Vehicles Meta **/
-    @GET("vehiclesMeta")
-    suspend fun getVehiclesMeta(): ServerResponse<List<VehicleMeta?>?>
-
-    @GET("vehiclesMeta/{id}")
-    suspend fun getVehicleById(
-        @Path(value = "id") vehicleMetaId: Long
-    ): ServerResponse<VehicleMeta?>
-
-    @POST("vehiclesMeta")
-    suspend fun createVehicleMeta(
-        @Body vehicleMeta: VehicleMeta
-    ): ServerResponse<VehicleMeta?>
+    //Auth
+    @POST("auth")
+    suspend fun auth(
+        @Body authRequest: AuthRequest
+    ) : ServerResponse<User>
 
 
-    /** Batteries **/
+    //Batteries
     @GET("batteries")
-    suspend fun getBatteries(): ServerResponse<List<Battery?>?>
+    suspend fun getBatteries() : ServerResponse<List<Battery>>
 
-    @POST("batteries")
-    suspend fun createBattery(
-        @Body battery: Battery
-    ): ServerResponse<Battery?>
+    //Charging Stations
+    @GET("chargingStations")
+    suspend fun getChargingStations() : ServerResponse<List<ChargingStation>>
 
+    @GET("chargingStations/{id}")
+    suspend fun getChargingStationById(
+        @Path(value = "id") stationId: Long
+    ) : ServerResponse<ChargingStation>
 
-    /** Electric Vehicles **/
+    @POST("chargingStations")
+    suspend fun createChargingStation(
+        @Body chargingStationRequest: ChargingStationRequest
+    ) : ServerResponse<ChargingStation>
+
+    @POST("chargingStations/{chargingStationId}/comment")
+    suspend fun postComment(
+        @Path(value = "chargingStationId") stationId: Long?,
+        @Body commentRequest: CommentRequest
+    ) : ServerResponse<ChargingStation>
+
+    @POST("chargingStations/{chargingStationId}/rating")
+    suspend fun postRating(
+        @Path(value = "chargingStationId") stationId: Long?,
+        @Body rating: RatingsRequest
+    ) : ServerResponse<ChargingStation>
+
+    @POST("chargingStations/{chargingStationId}/status")
+    suspend fun postStatus(
+        @Path(value = "chargingStationId") stationId: Long?,
+        @Body status: StatusRequest
+    ) : ServerResponse<ChargingStation>
+
+    @PATCH("chargingStations/{chargingStationId}")
+    suspend fun updateChargingStation(
+        @Path(value = "chargingStationId") stationId: Long?,
+        @Body status: ChargingStationRequest
+    ) : ServerResponse<ChargingStation>
+
+    //Electric Vehicles
     @GET("electricVehicles")
-    suspend fun getElectricVehicles(): ServerResponse<List<ElectricVehicle?>?>
+    suspend fun getElectricVehicles() : ServerResponse<List<ElectricVehicle>>
 
     @GET("electricVehicles/{id}")
     suspend fun getElectricVehiclesById(
-        @Path(value = "id") electricVehicleId: Long
-    ): ServerResponse<ElectricVehicle?>
+        @Path(value = "id") vehicleId: Long
+    ) : ServerResponse<ElectricVehicle>
 
     @POST("electricVehicles")
     suspend fun createElectricVehicle(
-        @Body electricVehicle: ElectricVehicleRequest
-    ): ServerResponse<ElectricVehicle?>
+        @Body electricVehicleRequest: ElectricVehicleRequest
+    ): ServerResponse<ElectricVehicle>
+
+    //Vehicles Meta
+    @GET("vehiclesMeta")
+    suspend fun getVehiclesMeta() : ServerResponse<List<VehicleMeta>>
+
+    @GET("vehiclesMeta/{id}")
+    suspend fun getVehicleMetaById(
+        @Path(value = "id") metaId: Long
+    ) : ServerResponse<VehicleMeta>
+
+    //User
+    @GET("users/me")
+    suspend fun getUserMe(): ServerResponse<User>
+
+    @PATCH("users/{id}")
+    suspend fun updateUser(
+        @Path(value = "id") userId: Long,
+        @Body userRequest: UserRequest
+    ) : ServerResponse<User>
+
+    @POST("users/{userId}/gamification")
+    suspend fun postGamification(
+        @Path(value = "userId") userId: Long,
+        @Body gamificationRequest: GamificationRequest
+    ): ServerResponse<User>
+
 }

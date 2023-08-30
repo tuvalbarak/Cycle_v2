@@ -18,12 +18,12 @@ class SplashFragment: CycleBaseFragment<FragmentSplashBinding>(FragmentSplashBin
     private val splashViewModel: SplashViewModel by viewModels()
 
 
-    private lateinit var auth: FirebaseAuth
+//    private lateinit var auth: FirebaseAuth
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        auth = Firebase.auth
-        splashViewModel.handleAuth(auth)
+//        auth = Firebase.auth
+//        splashViewModel.handleAuth(auth)
         initObservers()
     }
 
@@ -32,7 +32,6 @@ class SplashFragment: CycleBaseFragment<FragmentSplashBinding>(FragmentSplashBin
             event.getContentIfNotHandled()?.let { navigation ->
                 val action = when(navigation) {
                     SplashViewModel.NavigationEvent.GO_TO_SIGN_IN -> SplashFragmentDirections.actionSplashFragmentToLoginFragment()
-                    SplashViewModel.NavigationEvent.GO_TO_SIGN_UP -> TODO()
                     SplashViewModel.NavigationEvent.GO_TO_HOME -> SplashFragmentDirections.actionSplashFragmentToRoutesFragment()
                 }
                 findNavController().safeNavigate(action)

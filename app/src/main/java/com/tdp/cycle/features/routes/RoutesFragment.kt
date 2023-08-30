@@ -1,68 +1,294 @@
 package com.tdp.cycle.features.routes
 
+import android.Manifest
+import android.bluetooth.BluetoothSocket
+import android.content.pm.PackageManager
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.EditText
+import androidx.annotation.RequiresApi
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.widget.doOnTextChanged
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import br.ufrn.imd.obd.commands.ObdCommandGroup
+import br.ufrn.imd.obd.commands.engine.RPMCommand
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
+import com.google.android.material.snackbar.Snackbar
 import com.google.maps.android.PolyUtil
+import com.tdp.cycle.MainActivity
 import com.tdp.cycle.R
 import com.tdp.cycle.bases.CycleBaseFragment
+import com.tdp.cycle.common.gone
+import com.tdp.cycle.common.safeNavigate
 import com.tdp.cycle.common.toLocation
 import com.tdp.cycle.databinding.FragmentRoutesBinding
-import com.tdp.cycle.models.ChargingStationRealModel
-import com.tdp.cycle.models.StationAccess
+import com.tdp.cycle.models.cycle_server.ChargingStation
 import com.tdp.cycle.models.responses.Route
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
-import kotlin.random.Random
 
 @AndroidEntryPoint
 class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBinding::inflate), OnMapReadyCallback {
 
-    private val mapsViewModel: MapsViewModel by viewModels()
+    private val mapsViewModel: MapsViewModel by activityViewModels()
 
     private var googleMap: GoogleMap? = null
     private var currentLocationString: String? = null
-    private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStationRealModel?>>()
+    private val stationsMarkers = mutableListOf<Pair<Marker?, ChargingStation?>>()
     private var myMarker: Marker? = null
+    private var mapsPolyline: Pair<Polyline?, Polyline?> = Pair(null, null)
 
+    private val startAutocomplete =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val intent = result.data
+                if (intent != null) {
+                    //Got back from auto-complete screen -
+                    val place = Autocomplete.getPlaceFromIntent(intent)
+
+                    Log.i("CreateChargingStationFragment", "Place: ${place.name}, ${place.id} ${place.addressComponents}")
+                    place.address?.let { address ->
+                        onAutoCompleteFinished(address)
+                    }
+//                    binding?.routesSearchEditText?.setText(place.address)
+                }
+            } else if (result.resultCode == Activity.RESULT_CANCELED) {
+                // The user canceled the operation.
+                Log.i("CreateChargingStationFragment", "User canceled autocomplete")
+            }
+        }
+
+
+//    private var mainActivity: MainActivity? by lazy { (activity as? MainActivity) }
+
+    @RequiresApi(Build.VERSION_CODES.S)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+//        if(savedInstanceState == null) {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        (childFragmentManager.findFragmentById(R.id.routesMap) as? SupportMapFragment)?.getMapAsync(this)
+        if(++counter == 2) {
+            if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
-        initUi()
-        initObservers()
+                (childFragmentManager.findFragmentById(R.id.routesMap) as? SupportMapFragment)?.getMapAsync(this)
+                initObservers()
+
+            } else {
+//            val builder = AlertDialog.Builder(requireContext())
+//            builder.setTitle("Location approval needed")
+//            builder.setCancelable(false)
+//            builder.setPositiveButton("Approve Location") { dialog, _ ->
+//                (activity as? MainActivity)?.handlePermissions()
+//                dialog.dismiss()
+//            }
+//            builder.show()
+            }
+
+            initUi()
+        }
     }
+
+//    private fun startObdCommunication() {
+//        (activity as? MainActivity)?.apply {
+//            obdSocket?.let { socket ->
+//                viewLifecycleOwner.lifecycleScope.launch {
+//                    if (socket.isConnected) {
+//                        obdCommunicationFragment(socket)
+//                    } else {
+//                        connectObdSocket(socket)
+//                        obdCommunicationFragment(socket)
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    suspend fun obdCommunicationFragment(bluetoothSocket: BluetoothSocket?) {
+        withContext(Dispatchers.IO) {
+            bluetoothSocket?.let {
+                try {
+                    val inputStream = it.inputStream
+                    val outputStream = it.outputStream
+                    val buffer = ByteArray(1024)
+                    // Group many obd commands into a single command ()
+                    val obdCommands = ObdCommandGroup()
+                    obdCommands.add(RPMCommand())
+
+                    // Run all commands at once
+                    var obdFetching = true
+                    while(obdFetching) {
+                        val response = obdCommands.run(inputStream, outputStream)
+                        val response2 = obdCommands.commandPID
+                        val response3 = obdCommands.result
+                        val response4 = obdCommands.name
+
+                        // Receive the response into buffer from the OBD-II device.
+//                    val responseLength = inputStream.read(buffer)
+//
+//                    // Parse the response to extract the RPM value.
+//                    val responseString = String(buffer, 0, responseLength)
+
+                        Log.d("ressssssssponse", response.toString())
+                        Log.d("ressssssssponse", response2.toString())
+                        Log.d("ressssssssponse", response3.toString())
+                        Log.d("ressssssssponse", response4.toString())
+//                    Log.d("ressssssssponse", responseString)
+
+                        delay(10)
+                    }
+
+
+                } catch (e: Exception) {
+                    Log.e(RoutesFragment.TAG, "Could not connect to obd", e)
+                    null
+                }
+
+            }
+        }
+    }
+
+//    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+//    suspend fun obdCommunicationFragment(bluetoothSocket: BluetoothSocket?) {
+//        withContext(Dispatchers.IO) {
+//            bluetoothSocket?.let {
+//                try {
+//                    val inputStream = it.inputStream
+//                    val outputStream = it.outputStream
+//                    val buffer = ByteArray(1024)
+//                    // Group many obd commands into a single command ()
+//                    val obdCommands = ObdCommandGroup()
+//                    obdCommands.add(RPMCommand())
+//
+//                    // Run all commands at once
+//                    var obdFetching = true
+//                    while(obdFetching) {
+//                        val response = obdCommands.run(inputStream, outputStream)
+//                        val response2 = obdCommands.commandPID
+//                        val response3 = obdCommands.result
+//                        val response4 = obdCommands.name
+//
+////                        mapsViewModel.rpmValue.postValue(response3.toString())
+//
+//
+//
+//                        // Receive the response into buffer from the OBD-II device.
+////                    val responseLength = inputStream.read(buffer)
+////
+////                    // Parse the response to extract the RPM value.
+////                    val responseString = String(buffer, 0, responseLength)
+//
+//                        Log.d("ressssssssponse", response.toString())
+//                        Log.d("ressssssssponse", response2.toString())
+//                        Log.d("ressssssssponse", response3.toString())
+//                        Log.d("ressssssssponse", response4.toString())
+////                    Log.d("ressssssssponse", responseString)
+//
+//                        delay(10)
+//                    }
+//
+//
+//                } catch (e: Exception) {
+//                    Log.e(RoutesFragment.TAG, "Could not connect to obd", e)
+//                    null
+//                }
+//
+//            }
+//        }
+//    }
+
 
     override fun onResume() {
         super.onResume()
-        mapsViewModel.getMyEv()
+        mapsViewModel.getUserMe()
+    }
+
+    private fun intentAddress() {
+        // Initialize the SDK
+        Places.initialize(requireContext(), "AIzaSyAJIBntjoplGTf0G5yqAKUr_5xbiARll4Y")
+
+        // Set the fields to specify which types of place data to
+        // return after the user has made a selection.
+        val fields = listOf(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.ADDRESS_COMPONENTS)
+
+        // Start the autocomplete intent.
+        val intent = Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields)
+            .build(requireContext())
+        startAutocomplete.launch(intent)
     }
 
     private fun initUi() {
         binding?.apply {
-            routesSearchButton.setOnClickListener {
-
-                mapsViewModel.getDirections(
-                    origin = currentLocationString ?: "Ana Frank 14, Ramat-Gan",
-                    destination = routesSearchEditText.text.toString()
-                )
+            routesSearchEditText.setOnFocusChangeListener { view, isFocused ->
+                if (isFocused) {
+                    intentAddress()
+                }
             }
+
+            routesSearchEditText.setOnClickListener {
+                intentAddress()
+            }
+
+
+//            routesSearchButton.setOnClickListener {
+//
+//                mapsViewModel.getDirections(
+//                    origin = currentLocationString ?: "Ana Frank 14, Ramat-Gan",
+//                    destination = routesSearchEditText.text.toString()
+//                )
+//
+//                startObdCommunication()
+//            }
+            initBatteryGraph()
+        }
+    }
+
+    private fun onAutoCompleteFinished(address: String) {
+        mapsViewModel.getDirections(
+            origin = currentLocationString ?: "Ana Frank 14, Ramat-Gan",
+            destination = address
+        )
+    }
+
+    private fun initBatteryGraph() {
+        binding?.apply {
+            routesModelBatteryGraph.gone()
+            routesBatteryTitle.gone()
+            routesModelBatteryGraph.max = 100
         }
     }
 
@@ -70,7 +296,13 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
         mapsViewModel.bestRoute.observe(viewLifecycleOwner) { mapsDirectionResponse ->
             drawBestRoute(mapsDirectionResponse)
-            onRouteDrew(mapsDirectionResponse?.legs?.firstOrNull()?.duration?.text.toString())
+            onRouteDrew()
+        }
+
+        mapsViewModel.optimizingRouteEvent.observe(viewLifecycleOwner) { optimizingAndStation ->
+            if (optimizingAndStation.first) {
+                removePrevRouteIfExisted(optimizingAndStation.second)
+            }
         }
 
         mapsViewModel.geocode.observe(viewLifecycleOwner) { mapsGeocodeResults ->
@@ -78,7 +310,9 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
 
         mapsViewModel.chargingStations.observe(viewLifecycleOwner) { chargingStations ->
-            markChargingStations(chargingStations)
+            if (chargingStations.second) {
+                markChargingStations(chargingStations.first)
+            }
         }
 
         mapsViewModel.elevationDifference.observe(viewLifecycleOwner) { elevation ->
@@ -88,14 +322,8 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         mapsViewModel.myEvEvent.observe(viewLifecycleOwner) { myEv ->
 
             binding?.apply {
-                routesVehicleBrand.text = "Brand: " + myEv?.brand
-                routesVehicleModel.text = "Model: " + myEv?.model
-                val image = R.drawable.ic_tesla_y
-//                    if(ev?.id == 1L) R.drawable.ic_tesla_y
-//                    else R.drawable.ic_mg_marvel
-                routesModelImage.setImageDrawable(
-                    resources.getDrawable(image, null)
-                )
+                routesVehicleBrand.text = "Brand: " + myEv?.vehicleMeta?.brand
+                routesVehicleModel.text = "Model: " + myEv?.vehicleMeta?.model
             }
         }
 
@@ -112,60 +340,96 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
 
         mapsViewModel.user.observe(viewLifecycleOwner) { user ->
+            mapsViewModel.getMyEv()
             binding?.routesUserName?.text = user?.let {
-                "Hey, ${user.name?.split(" ")?.firstOrNull()}"
+                "${user.name?.split(" ")?.firstOrNull()}"
             } ?: ""
+            binding?.routesFragmentKmhValue?.text = user?.crystalsBalance?.toString()
         }
 
         mapsViewModel.batteryPercentage.observe(viewLifecycleOwner) { batteryPercentage ->
             batteryPercentage?.let {
                 binding?.routesBatteryLevel?.text = "Battery: $it%"
+                binding?.routesModelBatteryGraph?.visibility = View.VISIBLE
+                binding?.routesBatteryTitle?.visibility = View.VISIBLE
+                binding?.routesModelBatteryGraph?.progress = it.roundToInt()
+            }
+        }
+
+        mapsViewModel.routeEtaAndChargingEtaEvent.observe(viewLifecycleOwner) { routeEtaAndChargingEtaEvent ->
+            binding?.apply {
+                routesETA.text = "ETA: ${routeEtaAndChargingEtaEvent.first}"
+                routesChargingTime.gone()
+//                routesChargingTime.isVisible = routeEtaAndChargingEtaEvent.second.isNotNull()
+//                routesChargingTime.text = "Charging Time: ${routeEtaAndChargingEtaEvent.second}"
             }
 
         }
 
-        mapsViewModel.isObdAvailable.observe(viewLifecycleOwner) { isObdAvailable ->
-            if(isObdAvailable) {
-                //Nothing for now
+        mapsViewModel.isObdAvailable.observe(viewLifecycleOwner) { event ->
+            event?.getContentIfNotHandled()?.let { isObdAvailable ->
+                if(isObdAvailable) {
+                    //Nothing for now
 
-            } else {
-                //Show a dialog and ask for battery percentage
-                val inputEditTextField = EditText(requireActivity())
-                inputEditTextField.maxLines = 1
-                inputEditTextField.inputType = InputType.TYPE_CLASS_NUMBER
+                } else {
+                    //Show a dialog and ask for battery percentage
+                    val inputEditTextField = EditText(requireActivity())
+                    inputEditTextField.maxLines = 1
+                    inputEditTextField.inputType = InputType.TYPE_CLASS_NUMBER
 
-                val dialog = AlertDialog.Builder(requireContext())
-                    .setTitle("Couldn't connect to OBD")
-                    .setMessage("Enter your current EV's battery percentage...")
-                    .setView(inputEditTextField)
-                    .setPositiveButton("Let's start") { _, _ ->
-                        val editTextInput = inputEditTextField .text.toString()
-                        Log.d(TAG, "percentage => $editTextInput")
-                        mapsViewModel.updateBatteryPercentage(editTextInput.toDoubleOrNull())
-                    }
+                    val dialog = AlertDialog.Builder(requireContext())
+                        .setTitle("Couldn't connect to OBD")
+                        .setMessage("Enter your current EV's battery percentage...")
+                        .setView(inputEditTextField)
+                        .setCancelable(false)
+                        .setPositiveButton("Let's start") { arg0, arg1 ->
+                            val editTextInput = inputEditTextField .text.toString()
+                            mapsViewModel.updateBatteryPercentage(editTextInput.toDoubleOrNull())
+                        }
+//                    .setPositiveButton("Let's start") { _, _ ->
+//                        val editTextInput = inputEditTextField .text.toString()
+//                        Log.d(TAG, "percentage => $editTextInput")
+//                        mapsViewModel.updateBatteryPercentage(editTextInput.toDoubleOrNull())
+//                    }
 //                    .setNegativeButton("Cancel", null)
-                    .create()
-                dialog.show()
+                        .create()
+                    dialog.show()
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+                    inputEditTextField.doOnTextChanged { text, start, before, count ->
+                        val textAsNumber = text?.toString()?.toIntOrNull() ?: -1
+                        val isValidPercentage = textAsNumber in 0..100
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = isValidPercentage
+                    }
+                }
             }
         }
+
+        mapsViewModel.gamificationEvent.observe(viewLifecycleOwner) { event ->
+            event?.getContentIfNotHandled()?.let { message ->
+                binding?.apply {
+//                    Snackbar.make(root, message, Snackbar.LENGTH_LONG).show()
+//                    routesFragmentKmhValue.text = mapsViewModel.user.value?.crystalsBalance?.toString()
+                }
+            }
+        }
+
     }
 
-    private fun markChargingStations(chargingStations: List<ChargingStationRealModel?>?) {
+    private fun markChargingStations(chargingStations: List<ChargingStation?>?) {
         chargingStations?.forEach { chargingStation ->
-            val latlng = LatLng(chargingStation?.lat ?: 0.0, chargingStation?.lng ?: 0.0)
-            val icon = when(chargingStation?.station_access) {
-                StationAccess.PRIVATE.value -> svgToBitmap(R.drawable.charging_station_private)
-                StationAccess.PUBLIC.value -> svgToBitmap(R.drawable.charging_station_public)
-                else -> svgToBitmap(R.drawable.charging_station_public)
-            }
+            val latlng = LatLng(chargingStation?.lat?.toDouble() ?: 0.0, chargingStation?.lng?.toDouble() ?: 0.0)
+            val icon =
+                if(chargingStation?.isPrivate == true) svgToBitmap(R.drawable.charging_station_private)
+                else svgToBitmap(R.drawable.charging_station_public)
 
             val marker = googleMap?.addMarker(
                 MarkerOptions()
                     .position(latlng)
-                    .title(chargingStation?.station_name)
-                    .snippet(chargingStation?.station_access ?: "")
+                    .title(chargingStation?.name)
+//                    .snippet(chargingStation?.station_access ?: "")
                     .icon(icon)
             )
+            marker?.tag = chargingStation
             stationsMarkers.add(Pair(marker, chargingStation))
         }
     }
@@ -183,6 +447,14 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
+        googleMap?.setOnMarkerClickListener { marker ->
+            val chargingStation = marker.tag as? ChargingStation
+            findNavController().safeNavigate(
+                RoutesFragmentDirections.actionRoutesFragmentToChargingStationFragment(chargingStation)
+            )
+
+            true
+        }
         handleCurrentLocation(true)
     }
 
@@ -203,7 +475,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
 
                         if(shouldMoveCamera) {
                             //Updating camera location
-                            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,12f))
+                            googleMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(location ,16f))
                         }
                         //Adding a marker at the location (and removing previous one)
                         myMarker?.remove()
@@ -221,26 +493,69 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
         }
     }
 
-    private fun drawBestRoute(route: Route?) {
-        val polyline = PolylineOptions()
-            .addAll(PolyUtil.decode(route?.overviewPolyline?.points))
-            .width(16f)
-            .color(mapsViewModel.getSelectedRouteColor())
+    private fun removePrevRouteIfExisted(chargingStation: ChargingStation?) {
+        mapsPolyline.let { polyline ->
+            //If mapsPolyline is not null => user is already in a route => showing snackbar
+            binding?.apply {
+                Snackbar.make(root, "${chargingStation?.name}'s station status has been change. Your route is being optimized.", Snackbar.LENGTH_LONG).show()
+            }
+            polyline.first?.remove()
+            polyline.second?.remove()
+        }
+    }
 
-        googleMap?.addPolyline(polyline)
+    private fun drawBestRoute(routes: Pair<Route?, Route?>) {
 
-        route?.legs?.lastOrNull()?.let { leg ->
-            leg.endLocation?.let { endLocation ->
-                LatLng(endLocation.lat ?: 0.0, endLocation.lng ?: 0.0).let { latlng ->
-                    googleMap?.addMarker(
-                        MarkerOptions()
-                            .position(latlng)
-                            .title(leg.endAddress)
-                    )
+        val polylineUntilChargingStop = PolylineOptions()
+            .addAll(PolyUtil.decode(routes.first?.overviewPolyline?.points))
+            .width(18f)
+            .color(mapsViewModel.getRouteUntilChargingStationColor())
+
+        routes.second?.let {
+            val polylineAfterChargingStop = PolylineOptions()
+                .addAll(PolyUtil.decode(routes.second?.overviewPolyline?.points))
+                .width(18f)
+                .color(mapsViewModel.getRouteAfterChargingStationColor())
+
+            mapsPolyline = Pair(
+                googleMap?.addPolyline(polylineUntilChargingStop),
+                googleMap?.addPolyline(polylineAfterChargingStop)
+            )
+
+            routes.second?.legs?.lastOrNull()?.let { leg ->
+                leg.endLocation?.let { endLocation ->
+                    LatLng(endLocation.lat ?: 0.0, endLocation.lng ?: 0.0).let { latlng ->
+                        googleMap?.addMarker(
+                            MarkerOptions()
+                                .position(latlng)
+                                .title(leg.endAddress)
+                        )
+                    }
+                }
+            }
+        } ?: run {
+
+            mapsPolyline = Pair(
+                googleMap?.addPolyline(polylineUntilChargingStop),
+                null
+            )
+
+            routes.first?.legs?.lastOrNull()?.let { leg ->
+                leg.endLocation?.let { endLocation ->
+                    LatLng(endLocation.lat ?: 0.0, endLocation.lng ?: 0.0).let { latlng ->
+                        googleMap?.addMarker(
+                            MarkerOptions()
+                                .position(latlng)
+                                .title(leg.endAddress)
+                        )
+                    }
                 }
             }
         }
+
         removeUnnecessaryStations()
+        googleMap?.moveCamera(CameraUpdateFactory.zoomOut())
+
     }
 
     private fun drawAllRoutes(routes: List<Route?>) {
@@ -252,7 +567,7 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
             val color: Int
             val width: Float
             if(isRouteSelected) {
-                color = mapsViewModel.getSelectedRouteColor()
+                color = mapsViewModel.getRouteUntilChargingStationColor()
                 width = 16f
             } else {
                 color = routesColors.random()
@@ -284,20 +599,20 @@ class RoutesFragment: CycleBaseFragment<FragmentRoutesBinding>(FragmentRoutesBin
     private fun removeUnnecessaryStations() {
         //Removing all stations except the chosen one
         stationsMarkers.forEach { markerAndStation ->
-            if(markerAndStation.second?.station_id != mapsViewModel.bestStation.value?.station_id) {
+            if(markerAndStation.second?.id != mapsViewModel.bestStation.value?.id) {
                 markerAndStation.first?.remove()
             }
         }
     }
 
-    private fun onRouteDrew(ETA: String) {
+    private fun onRouteDrew() {
         binding?.apply {
-            routesETA.text = "ETA: $ETA"
             routesFooter.isVisible = false
         }
     }
 
     companion object {
-        private const val TAG = "RoutesFragmentTAG"
+        const val TAG = "RoutesFragmentTAG"
+        private var counter: Int = 0
     }
 }
